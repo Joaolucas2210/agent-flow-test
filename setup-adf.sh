@@ -17,7 +17,7 @@ ADF="$ROOT/ai-development-framework"
 CLAUDE_DIR="$ROOT/.claude"
 CODEX_DIR="$ROOT/.codex"
 CURSOR_DIR="$ROOT/.cursor"
-PLATFORM="claude"   # graphify --platform; set from the target in main()
+PLATFORMS="claude"  # graphify --platform(s) to wire; set from the target in main()
 GRAPHIFY_PKG="graphifyy"   # ⚠ verify at https://github.com/safishamsi/graphify
 
 # ---------------------------------------------------------------------------- output
@@ -91,7 +91,7 @@ setup_hooks() {
 # Use `make ci` to place the workflow when you want it.
 
 setup_graphify() {
-  info "Graphify — knowledge graph (per-project, --platform $PLATFORM)"
+  info "Graphify — knowledge graph (per-project, --platform $PLATFORMS)"
   # Auto-install if missing. ponytail: pip if graphify absent, else use what's there.
   if ! have graphify; then
     warn "graphify not found — installing '$GRAPHIFY_PKG' (⚠ verify pkg name at the repo)"
@@ -101,13 +101,17 @@ setup_graphify() {
   fi
   if have graphify; then
     ok "graphify present: $(graphify --version 2>/dev/null || echo '?')"
-    ( cd "$ROOT" && graphify install --platform "$PLATFORM" 2>/dev/null ) \
-      && ok "graphify skill installed (--platform $PLATFORM)" || warn "graphify install skipped/failed"
+    # One rule per activated platform — `all` wires claude+codex+cursor, not just one.
+    local p
+    for p in $PLATFORMS; do
+      ( cd "$ROOT" && graphify install --platform "$p" 2>/dev/null ) \
+        && ok "graphify skill installed (--platform $p)" || warn "graphify install skipped/failed (--platform $p)"
+    done
     # ponytail: the graph is built by the /graphify skill in-agent, not a shell command.
     info "build the graph in-agent:  /graphify .   → writes graphify-out/graph.json"
   else
     err "graphify still unavailable after install attempt."
-    printf '    pip install %s && graphify install --platform %s\n' "$GRAPHIFY_PKG" "$PLATFORM"
+    printf '    pip install %s && graphify install --platform %s\n' "$GRAPHIFY_PKG" "$PLATFORMS"
     printf '    then in-agent:  /graphify .\n'
   fi
 }
@@ -163,10 +167,10 @@ main() {
   case "$target" in
     -h|--help)         usage; exit 0 ;;
     --check|--doctor)  doctor; exit 0 ;;
-    claude)  PLATFORM="claude"; setup_claude ;;
-    codex)   PLATFORM="codex";  setup_codex ;;
-    cursor)  PLATFORM="cursor"; setup_cursor ;;
-    all)     PLATFORM="claude"; setup_claude; setup_codex; setup_cursor ;;
+    claude)  PLATFORMS="claude"; setup_claude ;;
+    codex)   PLATFORMS="codex";  setup_codex ;;
+    cursor)  PLATFORMS="cursor"; setup_cursor ;;
+    all)     PLATFORMS="claude codex cursor"; setup_claude; setup_codex; setup_cursor ;;
     *)       err "unknown target: $target"; usage; exit 2 ;;
   esac
   setup_hooks
