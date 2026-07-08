@@ -3,6 +3,9 @@
 /.claude/commands
 /.claude/skills
 /.codex/agents
+# /.cursor/rules holds graphify.mdc, written by `graphify install --platform cursor`.
+/.cursor/commands
+/.cursor/rules
 
 # Graphify knowledge graph output (built in-agent, machine-local).
 graphify-out/
