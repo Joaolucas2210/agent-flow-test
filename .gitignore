@@ -1,0 +1,14 @@
+# Generated activation artifacts — recreated by ./setup-adf.sh, never committed.
+/.claude/agents
+/.claude/commands
+/.claude/skills
+/.codex/agents
+
+# Graphify knowledge graph output (built in-agent, machine-local).
+graphify-out/
+
+# Tooling caches
+/.qodo/
+
+# Node
+node_modules/
