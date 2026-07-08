@@ -2,11 +2,19 @@
 
 **Staff-level agentic development for Claude Code · Cursor · Codex**
 
+![Stars](https://img.shields.io/github/stars/Joaolucas2210/agent-flow-test?style=flat&color=f5c518)
+![Forks](https://img.shields.io/github/forks/Joaolucas2210/agent-flow-test?style=flat)
+![Last commit](https://img.shields.io/github/last-commit/Joaolucas2210/agent-flow-test)
+![Issues](https://img.shields.io/github/issues/Joaolucas2210/agent-flow-test)
+
 ![Ponytail](https://img.shields.io/badge/Ponytail-minimalism-6e56cf)
 ![Graphify](https://img.shields.io/badge/Graphify-knowledge%20graph-2ea043)
 ![RTK](https://img.shields.io/badge/RTK-token%20killer-e0562b)
 ![Uncle Bob](https://img.shields.io/badge/Uncle%20Bob-discipline-1f6feb)
 ![Clean Code](https://img.shields.io/badge/Clean%20Code-metrics%20%3E%20line--by--line-555)
+
+<!-- demo: grave o fluxo /plan → /graphify → /build e troque este placeholder pelo GIF -->
+<!-- ![Demo](docs/demo.gif) -->
 
 ---
 
@@ -24,6 +32,22 @@ Quatro apostas centrais:
 | Output de terminal inunda o contexto | **RTK** (Rust Token Killer) | 60–90% menos tokens em ops de dev |
 | Reler arquivos inteiros a cada tarefa | **Graphify** (knowledge graph) | consulta o grafo em vez de reler |
 | Review linha-a-linha não escala | **Quality Gates** (métricas) | coverage/complexity/mutation como gate |
+
+---
+
+## Resultados & Benchmarks
+
+Alavancas medidas pelos vendors das ferramentas (metas do framework, ainda **não** re-medidas
+neste repo — abra um PR com seus próprios números):
+
+| Métrica | Alavanca | Efeito relatado |
+| --- | --- | --- |
+| Código gerado | Ponytail | até **~94%** menos código por feature |
+| Tokens em ops de dev | RTK | **60–90%** menos output de terminal |
+| Releitura de arquivos | Graphify | consulta o grafo em vez de reler (1 build, N queries) |
+
+> Tem números de um projeto real? Rode `rtk gain` e `/graphify query ...`, e mande via PR —
+> esta seção existe para virar dado medido, não claim de vendor.
 
 ---
 
@@ -173,6 +197,24 @@ Rebuild automático: `PostToolUse(Edit|Write)` → `hooks/graph-update.sh` (disp
 - **Uncle Bob** — TDD, boundaries limpos, review por **métricas** (coverage/complexity/mutation), humano no loop para arquitetura.
 
 A combinação: **output nível Staff** + **forte economia de tokens** (Ponytail menos código × RTK menos output × Graphify menos releituras) + **contexto inteligente** (o grafo é a memória).
+
+---
+
+## Community & Ecosystem
+
+- **Graphify** (knowledge graph) — <https://github.com/safishamsi/graphify>
+- **awesome-claude-skills** (Composio) — <https://github.com/composiohq/awesome-claude-skills>
+- **agency-agents** — <https://github.com/agency-ai-solutions/agency-agents>
+
+> Links do ecossistema não verificados neste ambiente — confirme antes de confiar.
+
+## Como contribuir
+
+1. Abra uma issue descrevendo o problema/ideia antes de um PR grande.
+2. `make check` e `make quality` devem passar localmente.
+3. Um skill/agent novo mora em `ai-development-framework/`; os symlinks (`.claude/`,
+   `.codex/`, `.cursor/`) apontam pra lá — não edite os links.
+4. Commits sem trailer de atribuição a IA.
 
 ---
 
