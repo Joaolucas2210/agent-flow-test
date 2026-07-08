@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check test-loop hooks ci clean-links
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -47,6 +47,15 @@ check: ## Verify tools (git/graphify/rtk) without changing anything
 
 quality: ## Run the full CI quality gates locally (coverage/complexity/mutation/cycles)
 	@chmod +x $(ADF)/hooks/ci-quality-gates.sh && $(ADF)/hooks/ci-quality-gates.sh
+
+graph-check: ## Report if the knowledge graph is stale vs HEAD (git rev-parse)
+	@report="graphify-out/GRAPH_REPORT.md"; \
+	[ -f "$$report" ] || { echo "✗ graph-check: $$report missing — build in-agent with /graphify ."; exit 1; }; \
+	built=$$(grep -oE 'Built from commit: `[0-9a-f]{7,40}`' "$$report" | grep -oE '[0-9a-f]{7,40}' | head -1); \
+	[ -n "$$built" ] || { echo "✗ graph-check: no 'Built from commit' line in $$report"; exit 1; }; \
+	head=$$(git rev-parse --short=$${#built} HEAD); \
+	if [ "$$built" = "$$head" ]; then echo "✓ graph fresh (commit $$head)"; \
+	else echo "✗ graph STALE: built from $$built, HEAD is $$head — run /graphify . to update"; exit 1; fi
 
 hooks: ## (Re)install the git pre-commit hook
 	@chmod +x $(ADF)/hooks/*.sh $(ADF)/hooks/pre-commit \
