@@ -3,6 +3,11 @@
 /.claude/commands
 /.claude/skills
 /.codex/agents
+# .codex/skills & prompts mix committed codex-native files with ADF symlinks from
+# setup-adf.sh. Ignoring the dirs hides the generated links; already-tracked files stay
+# tracked (gitignore never untracks). A new codex-native file here needs `git add -f`.
+/.codex/skills/
+/.codex/prompts/
 # /.cursor/rules holds graphify.mdc, written by `graphify install --platform cursor`.
 /.cursor/commands
 /.cursor/rules
