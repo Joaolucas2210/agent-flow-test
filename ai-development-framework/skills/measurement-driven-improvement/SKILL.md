@@ -9,11 +9,20 @@ You can't improve what you don't measure. Track the gate metrics as time series;
 where the number is worst, prove the delta.
 
 ## Steps
-1. **Snapshot** metrics each ship (coverage, CCN, mutation, cycles, token cost). Append to
-   `docs/metrics/history.csv` (RTK-compressed capture).
+1. **Snapshot** metrics each ship: `make metrics-snapshot` appends one row per commit
+   (idempotent) to `docs/metrics/history.csv`. Stack gates it can't compute stay `na` —
+   honest, not zero. Capture token savings with `make rtk-report`.
 2. **Rank hotspots** — highest complexity × churn (from graph history) = refactor first.
 3. **Target one.** Refactor the single worst offender; re-measure; keep the delta or revert.
 4. **Token metrics too.** Track `rtk gain` and graph-hit rate — context efficiency is a metric.
+
+## Graph-hit rate
+Before reading large files, query the graph. Record the choice so the rate is real, not asserted:
+```
+echo hit  >> ai-development-framework/docs/metrics/graph-hits.log   # queried the graph first
+echo miss >> ai-development-framework/docs/metrics/graph-hits.log   # opened big files without querying
+```
+Then `make graph-hit-rate` reports hits/total. No log yet ⇒ it says so, not a fake 100%.
 
 ## Example
 ```

@@ -20,3 +20,7 @@ graphify-out/
 
 # Node
 node_modules/
+
+# Metrics artifacts: volatile / machine-local. history.csv is the durable one, kept.
+ai-development-framework/docs/metrics/rtk-report.txt
+ai-development-framework/docs/metrics/graph-hits.log

@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate test-loop hooks ci clean-links
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -56,6 +56,36 @@ graph-check: ## Report if the knowledge graph is stale vs HEAD (git rev-parse)
 	head=$$(git rev-parse --short=$${#built} HEAD); \
 	if [ "$$built" = "$$head" ]; then echo "✓ graph fresh (commit $$head)"; \
 	else echo "✗ graph STALE: built from $$built, HEAD is $$head — run /graphify . to update"; exit 1; fi
+
+metrics-snapshot: ## Append this commit's metrics to docs/metrics/history.csv (idempotent per commit)
+	@csv="$(ADF)/docs/metrics/history.csv"; \
+	commit=$$(git rev-parse --short HEAD); \
+	date=$$(git show -s --format=%cs HEAD); \
+	report="graphify-out/GRAPH_REPORT.md"; graph=na; \
+	if [ -f "$$report" ]; then \
+	  built=$$(grep 'Built from commit' "$$report" | grep -oE '[0-9a-f]{7,40}' | head -1); \
+	  if [ -n "$$built" ]; then head=$$(git rev-parse --short=$${#built} HEAD); \
+	    [ "$$built" = "$$head" ] && graph=fresh || graph=stale; fi; \
+	fi; \
+	gain=na; command -v rtk >/dev/null 2>&1 && gain=$$(rtk gain 2>/dev/null | grep -oE '\([0-9.]+%\)' | head -1 | tr -d '()'); \
+	[ -n "$$gain" ] || gain=na; \
+	row="$$date,$$commit,na,na,na,na,$$graph,$$gain"; \
+	tmp=$$(mktemp); grep -v ",$$commit," "$$csv" > "$$tmp" || true; mv "$$tmp" "$$csv"; \
+	echo "$$row" >> "$$csv"; \
+	echo "✓ snapshot: $$row"; \
+	echo "  (coverage/mutation/complexity/cycles = na until a stack runner fills them — same honesty as 'make quality')"
+
+rtk-report: ## Save RTK token-savings (global + per-command) to docs/metrics/rtk-report.txt
+	@out="$(ADF)/docs/metrics/rtk-report.txt"; \
+	if command -v rtk >/dev/null 2>&1; then \
+	  { rtk gain; echo; rtk gain --history; } > "$$out" 2>&1 && echo "✓ rtk report → $$out"; \
+	else echo "⚠ rtk absent — nothing to report (install RTK to capture token savings)"; fi
+
+graph-hit-rate: ## Report graph-query hit rate from docs/metrics/graph-hits.log (agents append hit/miss)
+	@log="$(ADF)/docs/metrics/graph-hits.log"; \
+	[ -f "$$log" ] || { echo "⚠ no graph-hits log yet ($$log) — append 'hit' when a task queried the graph before reading big files, 'miss' otherwise"; exit 0; }; \
+	hits=$$(grep -c '^hit' "$$log" || true); miss=$$(grep -c '^miss' "$$log" || true); total=$$((hits+miss)); \
+	[ "$$total" -gt 0 ] && echo "graph-hit-rate: $$hits/$$total ($$((hits*100/total))%)" || echo "⚠ graph-hits log empty"
 
 hooks: ## (Re)install the git pre-commit hook
 	@chmod +x $(ADF)/hooks/*.sh $(ADF)/hooks/pre-commit \
