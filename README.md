@@ -31,10 +31,10 @@ Quatro apostas centrais:
 
 ```
 agent-flow-test/                     ← raiz: entrypoints + config das ferramentas
-├── setup-adf.sh                     # ativador (claude|codex|all) — links, hooks, Graphify, RTK
+├── setup-adf.sh                     # ativador (claude|codex|cursor|all) — links, hooks, Graphify, RTK
 ├── Makefile                         # task runner (make help)
 ├── README.md                        # este arquivo
-├── AGENTS.md                        # config lida pelo Codex (fica na raiz de propósito)
+├── AGENTS.md                        # config lida por Codex e Cursor (fica na raiz de propósito)
 │
 ├── sandbox/                         # código de teste do projeto, isolado do framework
 │   ├── index.js
@@ -55,11 +55,12 @@ agent-flow-test/                     ← raiz: entrypoints + config das ferramen
 │   ├── agents → ../ai-development-framework/agents
 │   ├── commands → …/commands
 │   └── skills → …/skills
-└── .codex/                          # symlinks por-item p/ Codex (skills, prompts)
+├── .codex/                          # symlinks por-item p/ Codex (skills, prompts)
+└── .cursor/                         # symlinks p/ Cursor (commands); AGENTS.md lido da raiz
 ```
 
 **Princípio da arquitetura:** o *core* (`ai-development-framework/`) é a única fonte de verdade;
-`.claude/` e `.codex/` são só **symlinks** para ele. O `sandbox/` é o código sob teste, separado
+`.claude/`, `.codex/` e `.cursor/` são só **symlinks** para ele. O `sandbox/` é o código sob teste, separado
 do framework. Os entrypoints (`Makefile`, `setup-adf.sh`) vivem na raiz.
 
 > GitHub Actions/CI está **fora do fluxo padrão** por enquanto. O workflow existe em
@@ -72,9 +73,10 @@ do framework. Os entrypoints (`Makefile`, `setup-adf.sh`) vivem na raiz.
 ### Opção 1 — Makefile (recomendado)
 
 ```bash
-make setup            # ativação completa: links + hooks + Graphify + RTK (Claude + Codex)
+make setup            # ativação completa: links + hooks + Graphify + RTK (Claude + Codex + Cursor)
 make adf-claude       # só Claude Code (.claude/) + Graphify
 make adf-codex        # só Codex (.codex/) + Graphify
+make adf-cursor       # só Cursor (.cursor/commands/) + Graphify
 make setup-graphify   # só o knowledge graph (pip install + install + build)
 make check            # verifica ferramentas, sem alterar nada
 ```
@@ -83,8 +85,8 @@ make check            # verifica ferramentas, sem alterar nada
 
 | Target | O que faz |
 | --- | --- |
-| `make setup` | ativação completa (Claude + Codex + hooks + Graphify + RTK) |
-| `make adf-claude` / `make adf-codex` | ativa para uma plataforma + Graphify |
+| `make setup` | ativação completa (Claude + Codex + Cursor + hooks + Graphify + RTK) |
+| `make adf-claude` / `make adf-codex` / `make adf-cursor` | ativa para uma plataforma + Graphify |
 | `make setup-graphify` | `pip install` + `graphify install --platform` + `graphify build` |
 | `make check` | doctor: verifica git/graphify/rtk |
 | `make quality` | roda os quality gates localmente |
@@ -98,9 +100,10 @@ make check            # verifica ferramentas, sem alterar nada
 Idempotente, nunca sobrescreve arquivos reais (só troca symlinks que ele mesmo cria):
 
 ```bash
-./setup-adf.sh all       # Claude + Codex (default) — já instala e constrói o Graphify
+./setup-adf.sh all       # Claude + Codex + Cursor (default) — já instala e constrói o Graphify
 ./setup-adf.sh claude    # só .claude/  (--platform claude no Graphify)
 ./setup-adf.sh codex     # só .codex/   (--platform codex)
+./setup-adf.sh cursor    # só .cursor/  (--platform cursor)
 ./setup-adf.sh --check   # doctor, sem alterações
 ./setup-adf.sh --help
 ```

@@ -10,14 +10,14 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex setup-graphify check quality test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality test-loop hooks ci clean-links
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}' \
 	  | sort
 
-setup: ## Full activation for Claude + Codex (links, hooks, Graphify, RTK)
+setup: ## Full activation for Claude + Codex + Cursor (links, hooks, Graphify, RTK)
 	@./setup-adf.sh all
 
 adf-claude: ## Activate framework for Claude Code (.claude/) + Graphify
@@ -25,6 +25,9 @@ adf-claude: ## Activate framework for Claude Code (.claude/) + Graphify
 
 adf-codex: ## Activate framework for Codex (.codex/) + Graphify
 	@./setup-adf.sh codex
+
+adf-cursor: ## Activate framework for Cursor (.cursor/commands/) + Graphify
+	@./setup-adf.sh cursor
 
 setup-graphify: ## Install (pip) + wire the Graphify skill (PLATFORM=claude|codex). Build the graph in-agent with /graphify .
 	@echo "▶ Graphify setup (--platform $(PLATFORM))"
@@ -64,4 +67,4 @@ test-loop: ## Smoke-test the framework loop (graph build + gates + rtk gain)
 clean-links: ## Remove framework symlinks from .claude/ and .codex/
 	@for l in .claude/agents .claude/commands .claude/skills .codex/agents; do \
 	  [ -L "$$l" ] && rm -f "$$l" && echo "removed $$l" || true; done
-	@echo "✓ per-item .codex links left intact (remove manually if needed)"
+	@echo "✓ per-item .codex/.cursor links left intact (remove manually if needed)"

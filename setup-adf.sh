@@ -16,6 +16,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ADF="$ROOT/ai-development-framework"
 CLAUDE_DIR="$ROOT/.claude"
 CODEX_DIR="$ROOT/.codex"
+CURSOR_DIR="$ROOT/.cursor"
 PLATFORM="claude"   # graphify --platform; set from the target in main()
 GRAPHIFY_PKG="graphifyy"   # ⚠ verify at https://github.com/safishamsi/graphify
 
@@ -67,6 +68,13 @@ setup_codex() {
   link_children "$ADF/skills"   "$CODEX_DIR/skills"
   link_children "$ADF/commands" "$CODEX_DIR/prompts"
   link "$ADF/agents" "$CODEX_DIR/agents"
+}
+
+setup_cursor() {
+  info "Cursor — linking commands into .cursor/commands (AGENTS.md is read natively at root)"
+  # ponytail: Cursor has no agents/skills runtime; only commands map cleanly. Its
+  # rules want .mdc — AGENTS.md already carries the flow, so we don't duplicate rules/.
+  link_children "$ADF/commands" "$CURSOR_DIR/commands"
 }
 
 setup_hooks() {
@@ -135,15 +143,16 @@ usage() {
 ${c_bold}setup-adf.sh${c_reset} — activate the AI Development Framework
 
 Usage:
-  ./setup-adf.sh [claude|codex|all]   Link framework + hooks + CI, then Graphify/RTK setup
-                                      (default: all)
-  ./setup-adf.sh --check | --doctor   Verify tools only, make no changes
+  ./setup-adf.sh [claude|codex|cursor|all]   Link framework + hooks + CI, then Graphify/RTK setup
+                                             (default: all)
+  ./setup-adf.sh --check | --doctor          Verify tools only, make no changes
   ./setup-adf.sh --help
 
 Targets:
   claude   Link agents/commands/skills into .claude/
   codex    Link skills->.codex/skills, commands->.codex/prompts (skips conflicts)
-  all      Both of the above
+  cursor   Link commands->.cursor/commands (AGENTS.md read natively at root)
+  all      All of the above
 EOF
 }
 
@@ -156,7 +165,8 @@ main() {
     --check|--doctor)  doctor; exit 0 ;;
     claude)  PLATFORM="claude"; setup_claude ;;
     codex)   PLATFORM="codex";  setup_codex ;;
-    all)     PLATFORM="claude"; setup_claude; setup_codex ;;
+    cursor)  PLATFORM="cursor"; setup_cursor ;;
+    all)     PLATFORM="claude"; setup_claude; setup_codex; setup_cursor ;;
     *)       err "unknown target: $target"; usage; exit 2 ;;
   esac
   setup_hooks
