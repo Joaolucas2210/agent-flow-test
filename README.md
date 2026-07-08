@@ -31,7 +31,7 @@ Quatro apostas centrais:
 | Agentes super-engenheiram | **Ponytail** (dev sênior preguiçoso) | até ~94% menos código gerado |
 | Output de terminal inunda o contexto | **RTK** (Rust Token Killer) | 60–90% menos tokens em ops de dev |
 | Reler arquivos inteiros a cada tarefa | **Graphify** (knowledge graph) | consulta o grafo em vez de reler |
-| Review linha-a-linha não escala | **Quality Gates** (métricas) | coverage/complexity/mutation como gate |
+| Review linha-a-linha não escala | **Quality Gates** (métricas) | coverage/complexity/mutation como gate — ativos por stack detectado (veja abaixo) |
 
 ---
 
@@ -113,7 +113,8 @@ make check            # verifica ferramentas, sem alterar nada
 | `make adf-claude` / `make adf-codex` / `make adf-cursor` | ativa para uma plataforma + Graphify |
 | `make setup-graphify` | `pip install` + `graphify install --platform` + `graphify build` |
 | `make check` | doctor: verifica git/graphify/rtk |
-| `make quality` | roda os quality gates localmente |
+| `make quality` | roda os quality gates do stack detectado (JS/TS ou Python); pula e avisa se não houver runner — nunca reporta verde falso |
+| `make graph-check` | reporta se o grafo (`graphify-out/GRAPH_REPORT.md`) está stale vs `git rev-parse HEAD` |
 | `make test-loop` | smoke-test: grafo + gates + `rtk gain` |
 | `make hooks` | (re)instala o git pre-commit |
 | `make ci` | (opcional) posiciona o workflow de CI |
@@ -222,7 +223,7 @@ A combinação: **output nível Staff** + **forte economia de tokens** (Ponytail
 
 1. `make setup` — ativa e conecta tudo (inclui Graphify).
 2. Ajuste thresholds em `ai-development-framework/rules/quality-thresholds.md`.
-3. Descomente as ferramentas do seu stack em `ai-development-framework/hooks/ci-quality-gates.sh`.
+3. `make quality` detecta o stack (JS/TS via `package.json`, Python via `pyproject/setup/pytest`) e roda só as ferramentas presentes; ajuste os comandos/thresholds em `ai-development-framework/hooks/ci-quality-gates.sh`. Sem stack/runner, ele pula e avisa (e falha em CI com `CI=1`) — não há gate verde falso.
 4. `/graphify .` no agente — constrói o grafo (`graphify-out/graph.json`); `--neo4j`/`--falkordb` p/ exportar.
 5. (Quando quiser CI) `make ci` e faça commit do workflow.
 
