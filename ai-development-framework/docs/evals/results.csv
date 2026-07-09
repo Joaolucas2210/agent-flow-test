@@ -1,0 +1,3 @@
+date,commit,case,resolved,iterations,est_tokens,gate
+2026-07-08,720bf00,sum-bug,yes,2,900,pass
+2026-07-08,720bf00,median-bug,yes,2,850,pass
