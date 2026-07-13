@@ -128,9 +128,18 @@ check_rtk() {
 
 doctor() {
   info "Environment check (no changes made)"
+  [ -f "$ROOT/VERSION" ] && ok "adf $(cat "$ROOT/VERSION")" || warn "no VERSION file"
   [ -d "$ADF" ] && ok "framework dir present" || die "missing $ADF — run from the project root"
   for t in git graphify rtk; do have "$t" && ok "$t: $(command -v "$t")" || warn "$t: not installed"; done
   [ -d "$ROOT/.git" ] && ok ".git present" || warn "not a git repo"
+  # Aggregate the read-only gates (each is its own make target). Heavy CI gate stays `make quality`.
+  if have make; then
+    for g in graph-check skill-audit mcp-audit; do
+      make -s -C "$ROOT" "$g" >/dev/null 2>&1 && ok "gate: $g" || warn "gate: $g failed — run 'make $g' for detail"
+    done
+  else
+    warn "make not found — run gates individually (see docs/install.md)"
+  fi
 }
 
 summary() {
@@ -149,7 +158,8 @@ ${c_bold}setup-adf.sh${c_reset} — activate the AI Development Framework
 Usage:
   ./setup-adf.sh [claude|codex|cursor|all]   Link framework + hooks + CI, then Graphify/RTK setup
                                              (default: all)
-  ./setup-adf.sh --check | --doctor          Verify tools only, make no changes
+  ./setup-adf.sh --check | --doctor          Verify tools + read-only gates, make no changes
+  ./setup-adf.sh --version                   Print the framework version (VERSION file)
   ./setup-adf.sh --help
 
 Targets:
@@ -166,6 +176,7 @@ main() {
   local target="${1:-all}"
   case "$target" in
     -h|--help)         usage; exit 0 ;;
+    -v|--version)      cat "$ROOT/VERSION" 2>/dev/null || echo "unknown"; exit 0 ;;
     --check|--doctor)  doctor; exit 0 ;;
     claude)  PLATFORMS="claude"; setup_claude ;;
     codex)   PLATFORMS="codex";  setup_codex ;;
