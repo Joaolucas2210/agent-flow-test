@@ -48,14 +48,8 @@ check: ## Verify tools (git/graphify/rtk) without changing anything
 quality: ## Run the full CI quality gates locally (coverage/complexity/mutation/cycles)
 	@chmod +x $(ADF)/hooks/ci-quality-gates.sh && $(ADF)/hooks/ci-quality-gates.sh
 
-graph-check: ## Report if the knowledge graph is stale vs HEAD (git rev-parse)
-	@report="graphify-out/GRAPH_REPORT.md"; \
-	[ -f "$$report" ] || { echo "✗ graph-check: $$report missing — build in-agent with /graphify ."; exit 1; }; \
-	built=$$(grep -oE 'Built from commit: `[0-9a-f]{7,40}`' "$$report" | grep -oE '[0-9a-f]{7,40}' | head -1); \
-	[ -n "$$built" ] || { echo "✗ graph-check: no 'Built from commit' line in $$report"; exit 1; }; \
-	head=$$(git rev-parse --short=$${#built} HEAD); \
-	if [ "$$built" = "$$head" ]; then echo "✓ graph fresh (commit $$head)"; \
-	else echo "✗ graph STALE: built from $$built, HEAD is $$head — run /graphify . to update"; exit 1; fi
+graph-check: ## Report if the knowledge graph is stale vs HEAD (tolerates topology-neutral commits)
+	@chmod +x $(ADF)/hooks/graph-check.sh && $(ADF)/hooks/graph-check.sh
 
 metrics-snapshot: ## Append this commit's metrics to docs/metrics/history.csv (idempotent per commit)
 	@csv="$(ADF)/docs/metrics/history.csv"; \
