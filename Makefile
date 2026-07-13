@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -89,6 +89,9 @@ graph-hit-rate: ## Report graph-query hit rate from docs/metrics/graph-hits.log 
 
 skill-audit: ## Audit skills: valid metadata, no broken refs, size/overlap/when-not warnings
 	@chmod +x $(ADF)/hooks/skill-audit.sh && $(ADF)/hooks/skill-audit.sh
+
+mcp-audit: ## Audit MCP inventory: allowlist, no broad shell/secrets/lethal-trifecta (mcp/servers.json)
+	@chmod +x $(ADF)/hooks/mcp-audit.sh && $(ADF)/hooks/mcp-audit.sh
 
 eval-agent-flow: ## Run one agent-flow eval case (CASE=sum-bug): objective gate + trajectory + record to docs/evals/results.csv
 	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh $(CASE)
