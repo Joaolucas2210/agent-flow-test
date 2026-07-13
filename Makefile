@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit eval-agent-flow test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -92,6 +92,16 @@ skill-audit: ## Audit skills: valid metadata, no broken refs, size/overlap/when-
 
 eval-agent-flow: ## Run one agent-flow eval case (CASE=sum-bug): objective gate + trajectory + record to docs/evals/results.csv
 	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh $(CASE)
+
+eval-agent-flow-all: ## Run every fixture case (doesn't abort on a failing case) — refreshes all rows in results.csv
+	@chmod +x $(ADF)/hooks/eval-agent-flow.sh; rc=0; \
+	for d in $(ADF)/docs/evals/fixtures/*/; do \
+	  c=$$(basename "$$d"); $(ADF)/hooks/eval-agent-flow.sh "$$c" || rc=1; \
+	done; \
+	echo "▶ all cases run (see docs/evals/results.csv) — next: make eval-diagnose"; exit $$rc
+
+eval-diagnose: ## Diagnose recurring eval failures → improvement-proposal stubs in docs/traces/proposals
+	@chmod +x $(ADF)/hooks/eval-diagnose.sh && $(ADF)/hooks/eval-diagnose.sh
 
 hooks: ## (Re)install the git pre-commit hook
 	@chmod +x $(ADF)/hooks/*.sh $(ADF)/hooks/pre-commit \
