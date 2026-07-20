@@ -18,3 +18,8 @@ The three-layer token stack — apply all three, always:
 - Read a file to answer a question the graph can answer.
 - Keep tool output in context after extracting the answer.
 - Add abstraction that generates more code to maintain.
+
+## Archetype note
+The **Sweeper** archetype owns this rule and auto-activates RTK + Graphify for aggressive
+sweeps (`loops/sweeper.md`). In long workflows, watch cost with `make token-budget`
+(`rtk gain` + graph-hit-rate). Every archetype still applies all three layers.

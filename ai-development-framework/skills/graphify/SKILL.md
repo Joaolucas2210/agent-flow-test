@@ -5,6 +5,8 @@ description: Build and query a knowledge graph of the whole codebase (code, docs
 
 # Graphify — knowledge graph / smart context
 
+> **Archetype:** All (cross-cutting) — every archetype queries the graph before deep reads.
+
 > Official skill: https://github.com/safishamsi/graphify
 > ⚠ Third-party. Verify the exact package name and command surface at the repo before wiring
 > into CI. Commands below follow the request/vendor docs; treat as unverified until confirmed.

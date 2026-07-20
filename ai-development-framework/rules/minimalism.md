@@ -18,3 +18,8 @@ Input validation at trust boundaries · error handling that prevents data loss �
 accessibility · anything explicitly requested · hardware calibration knobs.
 
 See `skills/ponytail/SKILL.md` for levels (`lite|full|ultra`, default full).
+
+## Archetype note
+Minimalism is the **Sweeper** archetype's core, but it governs every mode — Builder writes
+the least code that passes hard gates; Prototyper the least that resolves the unknown.
+Sweeper runs `ultra` for aggressive cuts (`loops/sweeper.md`).

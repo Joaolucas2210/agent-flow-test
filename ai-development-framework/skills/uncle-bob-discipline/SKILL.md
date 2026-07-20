@@ -5,6 +5,8 @@ description: The disciplined-AI backbone — TDD, clean boundaries, metrics-over
 
 # Uncle Bob Discipline
 
+> **Archetype:** Builder (backbone) — TDD and clean boundaries under every archetype.
+
 The professional standard: tested, clean, boundaried, measured, human-governed for taste.
 
 ## The disciplines

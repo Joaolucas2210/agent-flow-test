@@ -5,6 +5,8 @@ description: Orchestrate the multi-agent review panel, metrics-first, on a diff.
 
 # PR Review
 
+> **Archetype:** Maintainer — metrics-first review panel guarding the merge.
+
 Dispatch specialist reviewers in parallel; aggregate to a single ship/block verdict.
 
 ## Steps

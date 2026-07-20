@@ -5,6 +5,8 @@ description: Route terminal commands through RTK (Rust Token Killer) to compress
 
 # RTK Integration — output compression
 
+> **Archetype:** Sweeper — compress command output; fewer tokens, same signal.
+
 > Tool: https://github.com/rtk-ai/rtk — token-optimized CLI proxy.
 > ⚠ Third-party. Verify install and command surface at the repo before wiring into CI.
 

@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links
+.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -115,6 +115,29 @@ test-loop: ## Smoke-test the framework loop (graph build + gates + rtk gain)
 	@echo "▶ 2/3 quality gates"; $(MAKE) -s quality
 	@echo "▶ 3/3 token savings"; $(if $(RTK),rtk gain,echo "  (rtk absent — skipped)")
 	@echo "✓ loop OK — now drive /spec → /plan → /build → /test → /review → /ship in your agent"
+
+loop: ## List archetype modes. Enter one with: make loop-<archetype|phase> (e.g. loop-sweeper, loop-optimization)
+	@echo "▶ archetype loops (Cherny) — enter with 'make loop-<name>':"
+	@echo "  prototyper   (exploration)   explore fast, high churn"
+	@echo "  builder      (implementation) prototype → production, gates hard"
+	@echo "  sweeper      (optimization)   delete/simplify, RTK + Graphify auto"
+	@echo "  grower       (growth)         iterate on real metrics"
+	@echo "  maintainer   (maintenance)    security, reliability, scale"
+	@echo "  meta                          route an unclear task (archetype-orchestrator)"
+
+loop-%: ## (loop-<archetype|phase>) enter an archetype mode: print its loops/*.md context
+	@a="$*"; case "$$a" in \
+	  exploration) a=prototyper;; implementation) a=builder;; optimization) a=sweeper;; \
+	  growth) a=grower;; maintenance) a=maintainer;; esac; \
+	  f="loops/$$a.md"; \
+	  [ -f "$$f" ] || { echo "✗ unknown loop '$*' — see 'make loop'"; exit 1; }; \
+	  echo "▶ entering $$a loop — load this context into the agent:"; echo; cat "$$f"
+
+token-budget: ## Long-workflow token health: rtk gain + graph-hit-rate in one view
+	@echo "▶ token budget (long-workflow health)"; \
+	if command -v rtk >/dev/null 2>&1; then echo "— rtk gain —"; rtk gain 2>/dev/null || echo "  (rtk gain unavailable)"; \
+	else echo "  rtk absent — install RTK to measure output compression"; fi
+	@echo "— graph hit rate —"; $(MAKE) -s graph-hit-rate
 
 clean-links: ## Remove framework symlinks from .claude/ and .codex/
 	@for l in .claude/agents .claude/commands .claude/skills .codex/agents; do \

@@ -5,6 +5,8 @@ description: Turn ideas/PRDs into minimal, ordered, graph-informed implementatio
 
 # Planning
 
+> **Archetype:** Prototyper — turn a rough idea into a minimal, ordered plan before code.
+
 Plan the least work that ships value. The graph tells you what already exists; Ponytail tells
 you what not to build.
 

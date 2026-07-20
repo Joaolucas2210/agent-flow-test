@@ -5,6 +5,8 @@ description: Trend quality metrics over time and target the worst offenders. Imp
 
 # Measurement-Driven Improvement
 
+> **Archetype:** Grower — trend metrics, target the worst offender, prove the gain.
+
 You can't improve what you don't measure. Track the gate metrics as time series; refactor
 where the number is worst, prove the delta.
 
