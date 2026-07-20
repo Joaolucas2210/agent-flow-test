@@ -5,6 +5,8 @@ description: The objective merge gate — coverage, cyclomatic complexity, mutat
 
 # Quality Gates
 
+> **Archetype:** Builder + Maintainer — the objective floor that blocks the ship.
+
 Uncle Bob's discipline made mechanical: **the number is the gate.**
 
 ## The gates (tune thresholds per repo in `rules/quality-thresholds.md`)

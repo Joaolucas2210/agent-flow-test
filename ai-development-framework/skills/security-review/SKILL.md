@@ -5,6 +5,8 @@ description: Full security sweep of pending changes — taint tracing via the gr
 
 # Security Review
 
+> **Archetype:** Maintainer — controls are never simplified away.
+
 Ponytail is suspended here. Minimalism = less attack surface, never fewer controls.
 
 ## Steps

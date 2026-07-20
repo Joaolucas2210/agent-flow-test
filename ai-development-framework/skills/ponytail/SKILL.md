@@ -5,6 +5,8 @@ description: Lazy-senior-dev minimalism. Write the least code that works; questi
 
 # Ponytail — minimalism
 
+> **Archetype:** Sweeper — deletion over addition; the laziest solution that works.
+
 > Official skill: https://github.com/DietrichGebert/ponytail
 > Lazy means efficient, not careless. The best code is the code never written.
 

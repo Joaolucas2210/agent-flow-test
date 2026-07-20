@@ -5,6 +5,8 @@ description: Judge test quality by mutation score and edge-case discipline, not 
 
 # Test Review
 
+> **Archetype:** Builder — judge tests by mutation score, not just coverage.
+
 Coverage says lines *ran*. Mutation says tests *catch breakage*. Gate on mutation.
 
 ## Steps

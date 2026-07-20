@@ -5,6 +5,8 @@ description: Write the least code that works, test-first, graph-located. Use for
 
 # Implementation
 
+> **Archetype:** Builder — least code that works, test-first, at production quality.
+
 ## Steps
 1. **Locate precisely.** `/graphify query "where to add <thing>"` → insertion point. Avoid
    full-file reads.

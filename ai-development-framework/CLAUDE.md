@@ -18,6 +18,24 @@ Persistent rules for every agent in this framework. These OVERRIDE default behav
 5. **Human in the loop for taste.** Architecture, product trade-offs, and edge cases go to
    a human. Agents propose; humans decide on design. See `agents/staff-architect.md`.
 
+## Archetypes (Cherny)
+
+Every task runs in one of five modes. At the start of a task, if the mode is unclear, route
+it with `skills/archetype-orchestrator` (or `make loop` to list, `make loop-<name>` to enter).
+The prime directives above hold in **all** modes; the archetype only changes gate strictness
+and which skills lead.
+
+| Archetype | Leads with | Gates | Loop |
+|---|---|---|---|
+| **Prototyper** | explore, high churn, learn | loose (1 check) | `loops/prototyper.md` |
+| **Builder** | prototype → production | hard (`make quality`) | `loops/builder.md` |
+| **Sweeper** | delete, simplify, cut tokens | behavior-unchanged | `loops/sweeper.md` |
+| **Grower** | iterate on real metrics | trend must move | `loops/grower.md` |
+| **Maintainer** | security, reliability, scale | strictest | `loops/maintainer.md` |
+
+Normal lifecycle is a sequence (Prototyper → Builder → Sweeper → Grower → Maintainer); skip
+stages, never gates. **Sweeper auto-activates RTK + Graphify.** Human owns taste at each hand-off.
+
 ## Memory / state
 
 - The **knowledge graph is the memory**. Keep it fresh: hooks update it on commit; run

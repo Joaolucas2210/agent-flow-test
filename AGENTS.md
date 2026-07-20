@@ -44,6 +44,20 @@ Before changing code:
    - List validations run.
    - Mention risks and follow-ups.
 
+## Archetypes (Cherny)
+
+Pick the mode before the flow. The Mandatory Flow above maps onto five archetypes; each sets
+how strict the gates are. Route with `skills/archetype-orchestrator` or `make loop-<name>`.
+
+- **Prototyper** — Discovery/Planning on an unproven idea. High churn OK, gates loose, sandbox only.
+- **Builder** — Implementation + Test/Review. Test-first, hard gates (`make quality`).
+- **Sweeper** — delete/simplify/cut tokens; behavior unchanged. Auto: RTK + Graphify.
+- **Grower** — iterate on real metrics (`docs/metrics/`, evals). Trend must move.
+- **Maintainer** — security, reliability, scale, long-term health. Strictest gates.
+
+Lifecycle is a sequence (skip stages, never gates). Human owns taste at every hand-off.
+See `ai-development-framework/CLAUDE.md` and `loops/`.
+
 ## Rules
 
 - Do not introduce breaking changes without documenting them.

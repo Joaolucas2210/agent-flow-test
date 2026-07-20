@@ -5,6 +5,8 @@ description: Enforce Clean Code (Uncle Bob) mechanically — naming, small funct
 
 # Clean Code Enforcement
 
+> **Archetype:** Builder — clean names, small functions, one-thing, enforced at build time.
+
 Prefer a linter/metric over a human opinion for every rule that can be measured.
 
 ## Rules → enforcement

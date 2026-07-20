@@ -190,6 +190,57 @@ Rebuild automático: `PostToolUse(Edit|Write)` → `hooks/graph-update.sh` (disp
 
 ---
 
+## Archetype-Guided Agent Workflows
+
+Todo trabalho roda em um de cinco **arquétipos** (Boris Cherny). Eles não são papéis novos —
+são *modos* sobre as skills/agents/commands que já existem. O modo decide **qual skill lidera**
+e **quão estritos são os gates**; as diretivas primárias (grafo-first, Ponytail, RTK, métricas,
+humano-no-loop) valem em todos.
+
+Roteie um a tarefa com a skill `archetype-orchestrator`, ou `make loop` (listar) / `make loop-<nome>` (entrar).
+
+| Arquétipo | Foco | Skills que lideram | Agents | Commands | Gates | Loop |
+|---|---|---|---|---|---|---|
+| **Prototyper** | explorar rápido, alto churn | `planning`, `ddd-agent-skill` | staff-architect (taste) | `/spec`, `/plan` | frouxos (1 check) | `loops/prototyper.md` |
+| **Builder** | protótipo → produção | `implementation`, `uncle-bob-discipline`, `clean-code-enforcement`, `test-review`, `quality-gates` | backend/database/qa-reviewer | `/build`, `/test` | duros (`make quality`) | `loops/builder.md` |
+| **Sweeper** | deletar, simplificar, cortar tokens | `ponytail`, `rtk-integration`, `graphify` | — | — | comportamento inalterado | `loops/sweeper.md` |
+| **Grower** | iterar por métricas reais / PMF | `measurement-driven-improvement`, `quality-gates` | staff-architect (Grower) | `/test` (evals) | tendência tem de melhorar | `loops/grower.md` |
+| **Maintainer** | segurança, confiabilidade, escala | `security-review`, `quality-gates`, `pr-review` | security-reviewer, staff-architect (Maintainer) | `/review`, `/ship` | os mais estritos | `loops/maintainer.md` |
+
+`graphify` é transversal — todo arquétipo consulta o grafo antes de leituras profundas.
+**Sweeper auto-ativa RTK + Graphify.** Cada `skills/*/SKILL.md` declara seu arquétipo primário
+na linha `> **Archetype:**`.
+
+### Exemplo end-to-end (o ciclo completo)
+
+Feature: *"cachear respostas de uma API externa."*
+
+```
+1. Prototyper   make loop-exploration
+   /spec → /plan. Query no grafo p/ achar o call site. Rascunho em sandbox/,
+   caminho feliz só. Aprende: um lru_cache resolve? → sim. Descartar o resto.
+
+2. Builder      make loop-implementation
+   /build → @lru_cache(maxsize=1000)  # ponytail: stdlib; TTL só se medir que falha
+   /test → teste primeiro; coverage + complexity + mutation verdes (make quality).
+
+3. Sweeper      make loop-optimization   (RTK + Graphify auto)
+   Grafo mostra um wrapper de cache duplicado morto → deletar. rtk gain reportado.
+   make quality continua verde (comportamento inalterado).
+
+4. Grower       make loop-growth
+   make metrics-snapshot; hit-rate do cache vira métrica. make eval-diagnose
+   se recorrer falha. Muda só o que a métrica pede; confirma que mexeu o número.
+
+5. Maintainer   make loop-maintenance
+   security-reviewer: a chave de cache vaza PII? make token-budget em workflow longo.
+   make mcp-audit / skill-audit. Verde estável → ADR do "porquê".
+```
+
+Cada seta é um hand-off onde o **humano decide taste**. Pule etapas, nunca gates.
+
+---
+
 ## Benefícios
 
 - **Ponytail** — dev sênior preguiçoso: o menor código que funciona; questiona se algo precisa existir (YAGNI). Menos código = menos manutenção e menos contexto.

@@ -5,6 +5,8 @@ description: Apply Domain-Driven Design pragmatically — ubiquitous language, b
 
 # DDD Agent Skill
 
+> **Archetype:** Prototyper → Builder — sketch boundaries early, model them only when they hold.
+
 DDD for taste and boundaries, Ponytail for restraint. Model the domain, not your imagination.
 
 ## Core moves
