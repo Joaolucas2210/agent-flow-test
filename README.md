@@ -188,6 +188,8 @@ Rebuild automático: `PostToolUse(Edit|Write)` → `hooks/graph-update.sh` (disp
 /ship  → gates verdes → PR                   (hooks/ + skills/quality-gates)
 ```
 
+> Guia prático (auditar um projeto existente · pedir features): `ai-development-framework/docs/USAGE.md`.
+
 ---
 
 ## Archetype-Guided Agent Workflows
