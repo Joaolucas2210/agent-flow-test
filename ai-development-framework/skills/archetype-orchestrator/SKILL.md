@@ -35,6 +35,30 @@ Genuinely ambiguous → default **Prototyper** (cheapest to be wrong in), escala
   A task may skip stages, never gates. Reviewer agents run in Builder and Maintainer.
 - Human owns taste/irreversible calls at every hand-off (`agents/staff-architect.md`).
 
+## Dynamic switching (mid-task handoff)
+Re-classify when a signal fires mid-task — don't finish in the wrong mode. One switch at a time.
+
+| Signal mid-task | Switch to | Handoff (one line) |
+|---|---|---|
+| prototype proved out, "make it real" | Builder | freeze the sketch; carry only what's used, delete the rest |
+| working code feels bloated / too costly | Sweeper | snapshot gates green first; the sweep must keep them green |
+| gates green but a metric is the question | Grower | baseline the metric before touching anything |
+| a security / scale risk surfaces | Maintainer | stop feature work; risk gate before continuing |
+| Builder+ finds the idea was wrong | Prototyper | back to sandbox; the production attempt is the throwaway |
+
+Handoff = **carry** (decision + graph delta) · **reset** (gate posture + token sub-budget) · **name** the trigger. Log the switch; never drift silently.
+
+## Token budget (hierarchical)
+Parent budget = the task total (`make token-budget`). Each archetype draws a sub-budget; a switch resets it. Crossing the ceiling is a **termination condition**, not a suggestion. RTK + Graphify are the levers.
+
+| Archetype | Budget posture | Terminate when |
+|---|---|---|
+| Prototyper | tightest — sandbox, one path | learning cost > building cost → promote or drop |
+| Builder | moderate — tests earn tokens | feature done + gates green |
+| Sweeper | negative — must *return* tokens (report `rtk gain`) | the delta stops paying |
+| Grower | metered per iteration | trend flat 2 rounds |
+| Maintainer | audit-scoped | audits pass, steady state |
+
 ## Output format
 ```
 ARCHETYPE: <one of five>  (because <the deciding signal>)

@@ -238,6 +238,24 @@ Feature: *"cachear respostas de uma API externa."*
 ```
 
 Cada seta é um hand-off onde o **humano decide taste**. Pule etapas, nunca gates.
+O orquestrador também faz **switching dinâmico**: se um sinal dispara no meio da tarefa
+(protótipo provou-se, código inchou, risco de segurança surgiu), ele re-classifica e faz o
+hand-off suave — carrega a decisão + delta do grafo, reseta gates e sub-budget, e nomeia o gatilho.
+
+### Team Composition por Fase do Produto (Cherny)
+
+Qual arquétipo domina em cada fase do produto — e qual é o próximo gargalo a contratar.
+
+| Fase do produto | Arquétipo dominante | Suporte | Gate que mais importa | Próxima contratação |
+|---|---|---|---|---|
+| Pré-PMF / descoberta | **Prototyper** | Grower (sinais) | nenhum — velocidade de aprendizado | Builder (quando algo prova-se) |
+| 0→1 (primeira versão real) | **Builder** | Prototyper | `make quality` (coverage/mutation) | Sweeper (quando incha) |
+| Reduzir custo / dívida | **Sweeper** | Maintainer | comportamento inalterado + `rtk gain` | Grower (quando enxuto) |
+| 1→N / escala de uso | **Grower** | Builder | tendência de métrica tem de mexer | Maintainer (quando estabiliza) |
+| Maduro / escala crítica | **Maintainer** | Sweeper | os mais estritos (segurança + auditorias) | Prototyper (para a próxima aposta) |
+
+> Regra de Cherny: contrate para o **próximo** gargalo, não o atual. A composição é uma
+> sequência, não um org fixo — a mesma pessoa/agente troca de chapéu conforme a fase.
 
 ---
 
