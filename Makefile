@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
+.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -19,6 +19,15 @@ help: ## Show this help
 
 setup: ## Full activation for Claude + Codex + Cursor (links, hooks, Graphify, RTK)
 	@./setup-adf.sh all
+
+install-into: ## Copy the framework into another project and activate it (DEST=/path[ PLATFORM=all])
+	@[ -n "$(DEST)" ] || { echo "✗ DEST required — make install-into DEST=/your/project"; exit 1; }
+	@[ -d "$(DEST)" ] || { echo "✗ DEST not a directory: $(DEST)"; exit 1; }
+	@[ "$$(cd "$(DEST)" && pwd)" != "$$(pwd)" ] || { echo "✗ DEST is this repo — pick another project"; exit 1; }
+	@echo "▶ installing framework into $(DEST)"
+	@cp -r $(ADF) setup-adf.sh Makefile AGENTS.md "$(DEST)/"
+	@cd "$(DEST)" && ./setup-adf.sh $(PLATFORM)
+	@echo "✓ installed. Next in $(DEST): /graphify .   (build the graph over your code)"
 
 adf-claude: ## Activate framework for Claude Code (.claude/) + Graphify
 	@./setup-adf.sh claude
