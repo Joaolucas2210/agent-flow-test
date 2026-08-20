@@ -80,3 +80,11 @@ See `ai-development-framework/CLAUDE.md` and `loops/`.
   actors, while repository rules/reviewers retain the human architectural-taste boundary.
 - The core template in `ai-development-framework/.github/workflows/` is canonical. Install it
   with `make ci`; do not hand-edit the deployed copy.
+
+## Maintenance Routines
+
+Use `make routine-{dead-code,abstractions,security,graph,token-budget,governance}` for closed
+Maintainer loops. They default to `DRY_RUN=1`, record a trajectory, and run strict gates plus
+the MCP/skill audits. Dead-code and abstraction results are suggestions only; open a separate
+human-approved PR for any source change. Only graph refresh and metrics snapshots accept
+`DRY_RUN=0`; neither may commit directly to `main`.

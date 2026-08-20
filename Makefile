@@ -9,8 +9,9 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 # rtk if present, else raw. ponytail: don't force a dep that may be absent.
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
+DRY_RUN ?= 1
 
-.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
+.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability test-maintenance-routine rtk-report graph-hit-rate skill-audit mcp-audit routine-dead-code routine-abstractions routine-security routine-graph routine-token-budget routine-governance routine-all eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -90,6 +91,9 @@ observability-complete: ## Record completion and generate its trajectory (same v
 test-observability: ## Run the focused, dependency-free observability self-test
 	@$(ADF)/hooks/test-observability.sh
 
+test-maintenance-routine: ## Run the focused closed-maintenance routine self-test
+	@bash $(ADF)/hooks/test-maintenance-routine.sh
+
 rtk-report: ## Save RTK token-savings (global + per-command) to docs/metrics/rtk-report.txt
 	@out="$(ADF)/docs/metrics/rtk-report.txt"; \
 	if command -v rtk >/dev/null 2>&1; then \
@@ -107,6 +111,29 @@ skill-audit: ## Audit skills: valid metadata, no broken refs, size/overlap/when-
 
 mcp-audit: ## Audit MCP inventory: allowlist, no broad shell/secrets/lethal-trifecta (mcp/servers.json)
 	@chmod +x $(ADF)/hooks/mcp-audit.sh && $(ADF)/hooks/mcp-audit.sh
+
+routine-dead-code: ## Suggest graph-backed dead-code candidates; never deletes code
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh dead-code
+
+routine-abstractions: ## Suggest duplicate/leaky abstraction candidates; never unifies code
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh abstractions
+
+routine-security: ## Run the Maintainer security sweep and strict shared gates
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh security
+
+routine-graph: ## Check graph freshness; DRY_RUN=0 allows Graphify's incremental refresh
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh graph
+
+routine-token-budget: ## Audit RTK/graph cost; DRY_RUN=0 appends the metrics snapshot
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh token-budget
+
+routine-governance: ## Run the strict Skill and MCP governance audits
+	@DRY_RUN="$(DRY_RUN)" bash $(ADF)/hooks/maintenance-routine.sh governance
+
+routine-all: ## Run every closed maintenance loop in safe suggest-only mode
+	@for routine in security graph token-budget governance dead-code abstractions; do \
+	  $(MAKE) -s routine-$$routine DRY_RUN="$(DRY_RUN)" || exit $$?; \
+	done
 
 eval-agent-flow: ## Run one agent-flow eval case (CASE=sum-bug): objective gate + trajectory + record to docs/evals/results.csv
 	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh $(CASE)
