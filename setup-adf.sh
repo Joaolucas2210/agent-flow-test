@@ -87,8 +87,7 @@ setup_hooks() {
   fi
 }
 
-# GitHub Actions is intentionally out of the default flow for now.
-# Use `make ci` to place the workflow when you want it.
+# The GitHub-native pipeline is installed explicitly with `make ci`; its core template is canonical.
 
 setup_graphify() {
   info "Graphify — knowledge graph (per-project, --platform $PLATFORMS)"

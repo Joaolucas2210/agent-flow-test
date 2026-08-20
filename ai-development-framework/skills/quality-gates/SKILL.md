@@ -28,7 +28,8 @@ Uncle Bob's discipline made mechanical: **the number is the gate.**
 5. **PonyTail Review Gate** (final, after the numbers are green) — one lightweight pass:
    *"What here could be deleted, inlined, or replaced by stdlib/native without losing behavior?"*
    Any must-cut finding blocks the ship until cut or justified with a `// ponytail:` note.
-6. Update the graph so metrics reflect the shipped state.
+6. Record completion with `make observability-complete` and inspect `make metrics`; missing token/cost values stay `na`, never guessed.
+7. Update the graph so metrics reflect the shipped state.
 
 ## Example
 ```

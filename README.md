@@ -87,8 +87,8 @@ agent-flow-test/                     ← raiz: entrypoints + config das ferramen
 `.claude/`, `.codex/` e `.cursor/` são só **symlinks** para ele. O `sandbox/` é o código sob teste, separado
 do framework. Os entrypoints (`Makefile`, `setup-adf.sh`) vivem na raiz.
 
-> GitHub Actions/CI está **fora do fluxo padrão** por enquanto. O workflow existe em
-> `ai-development-framework/.github/workflows/` e pode ser posicionado depois com `make ci`.
+> O fluxo padrão é **Issue → Spec PR → Implementation PR**. Instale o workflow canônico do core
+> com `make ci`; a cópia em `.github/workflows/` é gerada, nunca a fonte de verdade.
 
 ---
 
@@ -117,7 +117,9 @@ make check            # verifica ferramentas, sem alterar nada
 | `make graph-check` | reporta se o grafo (`graphify-out/GRAPH_REPORT.md`) está stale vs `git rev-parse HEAD` |
 | `make test-loop` | smoke-test: grafo + gates + `rtk gain` |
 | `make hooks` | (re)instala o git pre-commit |
-| `make ci` | (opcional) posiciona o workflow de CI |
+| `make ci` | instala o workflow GitHub-native padrão (Issue → Spec → Implementation) |
+| `make metrics` | mostra tokens, sucesso, custo estimado, switches e execuções de eval |
+| `make observability-complete` | registra o fim da tarefa e gera a trajectory estruturada |
 | `make clean-links` | remove os symlinks do framework |
 
 ### Opção 2 — setup-adf.sh direto
@@ -176,7 +178,20 @@ Rebuild automático: `PostToolUse(Edit|Write)` → `hooks/graph-update.sh` (disp
 
 ---
 
-## Workflow: PRD → PR
+## Workflow padrão: Issue → Spec PR → Implementation PR
+
+```text
+Issue + agent:spec ou /agent proceed → Spec PR em draft
+/approve-plan (ator autorizado do repositório) → plano aprovado
+merge da Spec PR                     → Implementation PR em draft
+/agent implement                     → Builder pode iniciar
+```
+
+O workflow aplica quality gates, audit de MCP/skills/grafo, Ponytail Review Gate, sanity check
+de arquivos/secrets e publica o recibo de observabilidade. Veja
+[`ai-development-framework/docs/github-native-pipeline.md`](ai-development-framework/docs/github-native-pipeline.md).
+
+## Workflow Builder: PRD → PR
 
 ```
 /spec  → PRD a partir de uma ideia          (skills/planning)
@@ -187,6 +202,13 @@ Rebuild automático: `PostToolUse(Edit|Write)` → `hooks/graph-update.sh` (disp
 /graphify . --update → atualiza o grafo      (skills/graphify)
 /ship  → gates verdes → PR                   (hooks/ + skills/quality-gates)
 ```
+
+## Observabilidade
+
+Cada hand-off de arquétipo usa `make observability-record`; no fim, rode
+`make observability-complete` para gerar a trajectory e `make metrics` para o resumo de tokens,
+sucesso, custo estimado, switches e evals. Sem contagem exposta pelo runtime, o valor é `na` —
+nunca uma estimativa inventada.
 
 > Guia prático (auditar um projeto existente · pedir features): `ai-development-framework/docs/USAGE.md`.
 

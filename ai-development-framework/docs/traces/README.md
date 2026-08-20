@@ -32,6 +32,13 @@ make eval-diagnose           # 3. Diagnose — group failures, flag recurring, e
 A proposal is done when its change ships **and** `make eval-agent-flow CASE=<case>`
 goes from `resolved=no` to `resolved=yes` with no regression in the other cases.
 
+## Operational hand-offs
+
+`docs/observability/` complements eval trajectories: it records archetype hand-offs, mode
+switches, runtime token/budget data, and task duration. `make eval-agent-flow` writes to both
+surfaces, so a fixture outcome can be correlated with its operational path without duplicating
+the eval evidence.
+
 ## Scope (deliberately small)
 
 No headless runner, no generic loop controller, no failure-signature clustering

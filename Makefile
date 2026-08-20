@@ -10,7 +10,7 @@ GRAPHIFY_PKG := graphifyy    # ⚠ verify pkg name at https://github.com/safisha
 RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 
-.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics-snapshot rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
+.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability rtk-report graph-hit-rate skill-audit mcp-audit eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -78,6 +78,18 @@ metrics-snapshot: ## Append this commit's metrics to docs/metrics/history.csv (i
 	echo "✓ snapshot: $$row"; \
 	echo "  (coverage/mutation/complexity/cycles = na until a stack runner fills them — same honesty as 'make quality')"
 
+metrics: ## Show agent-flow tokens, outcomes, estimated cost, switches, and eval runs
+	@$(ADF)/hooks/observability.sh summary
+
+observability-record: ## Record a structured archetype hand-off (TASK=... ARCHETYPE=...)
+	@TASK="$(TASK)" ARCHETYPE="$(ARCHETYPE)" PHASE="$(PHASE)" TOKENS_IN="$(TOKENS_IN)" TOKENS_OUT="$(TOKENS_OUT)" BUDGET_REMAINING="$(BUDGET_REMAINING)" DURATION_SECONDS="$(DURATION_SECONDS)" COST_USD="$(COST_USD)" SWITCHED="$(SWITCHED)" TRIGGER="$(TRIGGER)" OUTCOME="$(OUTCOME)" $(ADF)/hooks/observability.sh record
+
+observability-complete: ## Record completion and generate its trajectory (same variables as observability-record)
+	@TASK="$(TASK)" ARCHETYPE="$(ARCHETYPE)" PHASE="$(PHASE)" TOKENS_IN="$(TOKENS_IN)" TOKENS_OUT="$(TOKENS_OUT)" BUDGET_REMAINING="$(BUDGET_REMAINING)" DURATION_SECONDS="$(DURATION_SECONDS)" COST_USD="$(COST_USD)" SWITCHED="$(SWITCHED)" TRIGGER="$(TRIGGER)" OUTCOME="$(OUTCOME)" $(ADF)/hooks/observability.sh complete
+
+test-observability: ## Run the focused, dependency-free observability self-test
+	@$(ADF)/hooks/test-observability.sh
+
 rtk-report: ## Save RTK token-savings (global + per-command) to docs/metrics/rtk-report.txt
 	@out="$(ADF)/docs/metrics/rtk-report.txt"; \
 	if command -v rtk >/dev/null 2>&1; then \
@@ -114,15 +126,16 @@ hooks: ## (Re)install the git pre-commit hook
 	  && ln -sf ../../$(ADF)/hooks/pre-commit .git/hooks/pre-commit \
 	  && echo "✓ pre-commit installed"
 
-ci: ## Copy the GitHub Actions workflow to .github/workflows/ (repo root)
+ci: ## Install the canonical GitHub-native pipeline at .github/workflows/ (repo root)
 	@mkdir -p .github/workflows \
-	  && cp $(ADF)/.github/workflows/quality-gates.yml .github/workflows/ \
-	  && echo "✓ workflow at .github/workflows/quality-gates.yml"
+	  && cp $(ADF)/.github/workflows/*.yml .github/workflows/ \
+	  && echo "✓ workflows installed from $(ADF)/.github/workflows/"
 
-test-loop: ## Smoke-test the framework loop (graph build + gates + rtk gain)
-	@echo "▶ 1/3 rebuild graph"; command -v graphify >/dev/null 2>&1 && graphify build || echo "  (graphify absent — skipped)"
-	@echo "▶ 2/3 quality gates"; $(MAKE) -s quality
-	@echo "▶ 3/3 token savings"; $(if $(RTK),rtk gain,echo "  (rtk absent — skipped)")
+test-loop: ## Smoke-test the framework loop (graph build + gates + observability + rtk gain)
+	@echo "▶ 1/4 rebuild graph"; command -v graphify >/dev/null 2>&1 && graphify build || echo "  (graphify absent — skipped)"
+	@echo "▶ 2/4 quality gates"; $(MAKE) -s quality
+	@echo "▶ 3/4 observability"; $(MAKE) -s test-observability
+	@echo "▶ 4/4 token savings"; $(if $(RTK),rtk gain || echo "  (rtk gain unavailable — skipped)",echo "  (rtk absent — skipped)")
 	@echo "✓ loop OK — now drive /spec → /plan → /build → /test → /review → /ship in your agent"
 
 loop: ## List archetype modes. Enter one with: make loop-<archetype|phase> (e.g. loop-sweeper, loop-optimization)

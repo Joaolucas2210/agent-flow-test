@@ -69,3 +69,14 @@ See `ai-development-framework/CLAUDE.md` and `loops/`.
 - If tests are missing, add focused tests where practical.
 - If unable to run validation, explain why.
 
+## Observability and GitHub-native flow
+
+- Every archetype hand-off records mode, switch trigger, token input/output, sub-budget,
+  timestamp, and duration via `make observability-record`.
+- End relevant work with `make observability-complete`; it generates a trajectory. Use
+  `make metrics` in the PR evidence. Unavailable runtime accounting is `na`, never guessed.
+- Default delivery is Issue → Spec PR → approved plan → Implementation PR. Use `agent:spec` or
+  `/agent proceed`, `/approve-plan`, and `/agent implement`; association checks authorize repo
+  actors, while repository rules/reviewers retain the human architectural-taste boundary.
+- The core template in `ai-development-framework/.github/workflows/` is canonical. Install it
+  with `make ci`; do not hand-edit the deployed copy.

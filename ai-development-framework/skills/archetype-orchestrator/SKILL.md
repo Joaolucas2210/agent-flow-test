@@ -46,7 +46,7 @@ Re-classify when a signal fires mid-task — don't finish in the wrong mode. One
 | a security / scale risk surfaces | Maintainer | stop feature work; risk gate before continuing |
 | Builder+ finds the idea was wrong | Prototyper | back to sandbox; the production attempt is the throwaway |
 
-Handoff = **carry** (decision + graph delta) · **reset** (gate posture + token sub-budget) · **name** the trigger. Log the switch; never drift silently.
+Handoff = **carry** (decision + graph delta) · **reset** (gate posture + token sub-budget) · **name** the trigger. Log the switch; never drift silently. Before the hand-off, run `make observability-record` with `TASK`, `ARCHETYPE`, `PHASE`, `TOKENS_IN`, `TOKENS_OUT`, `BUDGET_REMAINING`, `DURATION_SECONDS`, and, when applicable, `SWITCHED=true TRIGGER=<signal>`. At task exit, run `make observability-complete` with the same structured fields and `OUTCOME=success|failure`; it writes the trajectory automatically.
 
 ## Token budget (hierarchical)
 Parent budget = the task total (`make token-budget`). Each archetype draws a sub-budget; a switch resets it. Crossing the ceiling is a **termination condition**, not a suggestion. RTK + Graphify are the levers.
