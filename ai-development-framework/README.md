@@ -17,6 +17,7 @@ Disciplined AI (Uncle Bob) + Minimalism (Ponytail) + Token efficiency (RTK + Gra
 | Re-reading whole files every task | **Graphify** (knowledge graph) | query the graph instead of re-reading |
 | Line-by-line review doesn't scale | **Quality gates** (metrics) | coverage/complexity/mutation as the gate |
 | No architectural taste | **staff-architect** + human-in-loop | trade-offs stay with humans |
+| Agent hand-offs are opaque | **Observability** (JSONL + trajectories) | token/budget/switch evidence |
 
 ---
 
@@ -37,7 +38,20 @@ ai-development-framework/
 
 ---
 
-## Workflow: PRD → PR
+## Default workflow: Issue → Spec PR → Implementation PR
+
+```text
+Issue + agent:spec or /agent proceed → draft Spec PR
+/approve-plan (authorized repository actor) → plan-approved label
+merge Spec PR                        → draft Implementation PR
+/agent implement                     → Builder work may start
+/build → /test → /review → /ship     → gated implementation merge
+```
+
+Install the root workflow with `make ci`. The core template remains the source of truth; see
+[`docs/github-native-pipeline.md`](docs/github-native-pipeline.md) for permissions and controls.
+
+## Builder workflow
 
 ```
 /spec    → docs/PRD from a rough idea         (skills/planning)
@@ -50,6 +64,14 @@ ai-development-framework/
 ```
 
 Each `/command` maps to a skill. Reviewers run as sub-agents. Gates block the ship.
+
+## Observability
+
+Every archetype hand-off records its mode, dynamic switch, token input/output, remaining
+sub-budget, timestamp, and duration with `make observability-record`. End a task with
+`make observability-complete` to generate its trajectory, then use `make metrics` for tokens,
+outcomes, estimated supplied cost, switches, and linked eval-run count. Values a runtime cannot
+measure are `na`, never fabricated. See [`docs/observability/README.md`](docs/observability/README.md).
 
 ---
 

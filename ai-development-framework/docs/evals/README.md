@@ -33,7 +33,8 @@ make eval-agent-flow CASE=median-bug # Python
   what the agent thought/did/observed is first-class, not optional.
 - Required runtime absent (`node`/`python3`) ⇒ honest skip (`resolved=na`, exit 0),
   never a fake pass.
-- Result is appended to `results.csv`, idempotent per `commit+case`.
+- Result is appended to `results.csv`, idempotent per `commit+case`, and the same outcome is
+  recorded as a `Grower` event in `docs/observability/events.jsonl` with an automatic trajectory.
 
 ## How it proves the concept (fail → pass)
 

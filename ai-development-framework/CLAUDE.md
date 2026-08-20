@@ -40,6 +40,9 @@ stages, never gates. **Sweeper auto-activates RTK + Graphify.** Human owns taste
 
 - The **knowledge graph is the memory**. Keep it fresh: hooks update it on commit; run
   `/graphify .` after large changes.
+- The **observability log is the hand-off evidence**. Record every archetype hand-off with
+  `make observability-record`; complete tasks with `make observability-complete` so a trajectory
+  exists before `/ship`. Missing runtime token/cost accounting is `na`, never estimated.
 - ADRs in `docs/architecture-decision-records/` are the durable record of *why*.
 - CLAUDE.md files (root + per-skill) are the durable record of *how*.
 
@@ -71,4 +74,5 @@ data loss, security controls, accessibility basics, or anything explicitly reque
 - [ ] Tests pass; coverage + complexity + mutation gates green
 - [ ] Reviewer agents run (metrics report, not line-by-line)
 - [ ] Graph updated (`/graphify .`/hook)
+- [ ] Observability completion + trajectory recorded; `make metrics` included in the PR
 - [ ] ADR written if an architectural decision was made

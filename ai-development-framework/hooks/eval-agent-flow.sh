@@ -20,6 +20,7 @@ CASE="${1:-sum-bug}"
 FIX="$EVALS/fixtures/$CASE"
 TRAJ="$EVALS/runs/$CASE.trajectory.md"
 CSV="$EVALS/results.csv"
+started=$SECONDS
 
 echo "▶ eval-agent-flow ($CASE)"
 [ -d "$FIX" ]  || { echo "✗ no fixture at $FIX"; exit 1; }
@@ -64,4 +65,10 @@ tmp="$(mktemp)"; grep -v ",$commit,$CASE," "$CSV" > "$tmp" 2>/dev/null || true; 
 echo "$row" >> "$CSV"
 
 echo "✓ recorded: $row"
+outcome=failure
+[ "$resolved" = yes ] && outcome=success
+[ "$resolved" = na ] && outcome=skipped
+TASK="eval-$CASE" ARCHETYPE=Grower PHASE=eval TOKENS_IN=na TOKENS_OUT=na BUDGET_REMAINING=na \
+  DURATION_SECONDS="$((SECONDS - started))" OUTCOME="$outcome" \
+  "$ADF/hooks/observability.sh" complete
 [ "$resolved" = "yes" ] || [ "$resolved" = "na" ]   # exit code = resolved

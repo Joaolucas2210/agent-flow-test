@@ -8,6 +8,7 @@ run()  { command -v rtk >/dev/null 2>&1 && rtk "$@" || "$@"; }
 fail() { echo "✗ $1"; exit 1; }
 
 CI="${CI:-}"                     # set CI=1 (any CI runner sets this) → "no gates" becomes a hard failure
+ADF="${ADF:-ai-development-framework}"
 gates_run=0
 skipped=()
 
@@ -38,6 +39,9 @@ fi
 
 # 6. Token efficiency report (informational).
 command -v rtk >/dev/null 2>&1 && rtk gain || true
+
+# 7. Observability contract — task hand-offs must remain structured and trajectory-capable.
+"$ADF/hooks/test-observability.sh" || fail "observability contract"
 
 # Honest verdict — never claim green for gates that never ran.
 if [ ${#skipped[@]} -gt 0 ]; then printf '  skipped: %s\n' "${skipped[@]}"; fi
