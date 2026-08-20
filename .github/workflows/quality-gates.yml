@@ -26,6 +26,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build the local code graph
+        run: |
+          python -m pip install --disable-pip-version-check graphifyy==0.9.47
+          graphify extract . --code-only
+          graphify cluster-only . --no-label
       - name: Change safety guard
         env:
           BASE_REF: ${{ github.base_ref }}

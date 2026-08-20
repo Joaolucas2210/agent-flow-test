@@ -22,12 +22,15 @@ else
 fi
 
 # 2-5. Real gates, only for a detected stack. Each either runs (counts) or is recorded as skipped.
-if [ -f package.json ]; then
-  echo "▶ stack: JS/TS"
-  if command -v npm   >/dev/null 2>&1; then run npm test          || fail "tests (npm)";              gates_run=$((gates_run+1)); else skipped+=("tests (no npm)"); fi
-  if command -v madge >/dev/null 2>&1; then run madge --circular . || fail "dependency cycles (madge)"; gates_run=$((gates_run+1)); else skipped+=("cycles (no madge)"); fi
-  if command -v npx >/dev/null 2>&1 && { [ -f stryker.conf.js ] || [ -f stryker.conf.json ] || [ -f stryker.config.mjs ]; }; then
-    run npx stryker run || fail "mutation (stryker)"; gates_run=$((gates_run+1)); else skipped+=("mutation (no stryker config)"); fi
+js_dir=""
+[ -f package.json ] && js_dir=.
+[ -z "$js_dir" ] && [ -f sandbox/package.json ] && js_dir=sandbox
+if [ -n "$js_dir" ]; then
+  echo "▶ stack: JS/TS ($js_dir)"
+  if command -v npm   >/dev/null 2>&1; then run npm --prefix "$js_dir" test || fail "tests (npm)"; gates_run=$((gates_run+1)); else skipped+=("tests (no npm)"); fi
+  if command -v madge >/dev/null 2>&1; then run madge --circular "$js_dir" || fail "dependency cycles (madge)"; gates_run=$((gates_run+1)); else skipped+=("cycles (no madge)"); fi
+  if command -v npx >/dev/null 2>&1 && { [ -f "$js_dir/stryker.conf.js" ] || [ -f "$js_dir/stryker.conf.json" ] || [ -f "$js_dir/stryker.config.mjs" ]; }; then
+    ( cd "$js_dir" && run npx stryker run ) || fail "mutation (stryker)"; gates_run=$((gates_run+1)); else skipped+=("mutation (no stryker config)"); fi
 elif [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f pytest.ini ] || [ -f setup.py ]; then
   echo "▶ stack: Python"
   if command -v pytest >/dev/null 2>&1; then run pytest              || fail "tests/coverage (pytest)"; gates_run=$((gates_run+1)); else skipped+=("tests/coverage (no pytest)"); fi
