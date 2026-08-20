@@ -122,6 +122,27 @@ make check            # verifica ferramentas, sem alterar nada
 | `make observability-complete` | registra o fim da tarefa e gera a trajectory estruturada |
 | `make clean-links` | remove os symlinks do framework |
 
+## Maintenance Routines
+
+Closed Maintenance Loops rodam em **Maintainer**, registram observabilidade/trajectory e
+reaproveitam os quality gates, auditorias MCP/skills e a verificação do grafo. O padrão é
+`DRY_RUN=1`: não removem código, não unificam abstrações e não fazem commit. Achados de alto
+impacto viram um PR separado, aprovado por humano.
+
+| Target | Resultado |
+| --- | --- |
+| `make routine-dead-code` | candidatos sem chamadas no grafo, somente sugestão |
+| `make routine-abstractions` | nomes de callables duplicados para revisão de boundary/leakage |
+| `make routine-security` | sweep de material secreto, whitespace e controles estritos |
+| `make routine-graph` | freshness; `DRY_RUN=0` permite update incremental do Graphify |
+| `make routine-token-budget` | RTK + graph hit rate; `DRY_RUN=0` grava o snapshot de métricas |
+| `make routine-governance` | inventário/allowlist MCP e governança de skills |
+| `make routine-all` | todas as rotinas, em modo seguro |
+
+O workflow canônico `closed-maintenance-loops` roda diariamente em modo seco; às segundas,
+inclui os sweeps de sugestão. Também aceita `workflow_dispatch`. Ele só publica a trajectory
+como artefato: nunca altera `main` nem abre/aprova PR automaticamente.
+
 ### Opção 2 — setup-adf.sh direto
 
 Idempotente, nunca sobrescreve arquivos reais (só troca symlinks que ele mesmo cria):
