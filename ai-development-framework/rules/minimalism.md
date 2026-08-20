@@ -1,12 +1,12 @@
 # Minimalism rules (Ponytail, canonical)
 
 Stop at the first rung that holds:
-1. Does it need to exist? Speculative → skip, say so. (YAGNI)
-2. Stdlib does it? Use it.
-3. Native platform feature? Use it (CSS over JS, DB constraint over app code).
-4. Existing dependency solves it? Use it — no new dep for a few lines.
-5. One line? One line.
-6. Only then: minimum code that works.
+1. **Does this need to exist?** Speculative → skip, say so. (YAGNI)
+2. **Stdlib does it?** Use it.
+3. **Native platform feature?** `<input type="date">` over a lib; CSS over JS; DB constraint over app code.
+4. **Existing dependency solves it?** Use it. No new dep for a few lines.
+5. **One line?** One line.
+6. **Only then:** minimum code that works.
 
 ## Always
 - Fewest files, shortest diff, boring over clever.

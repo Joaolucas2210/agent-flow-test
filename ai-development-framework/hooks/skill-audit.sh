@@ -44,6 +44,14 @@ for sk in "$dir"/*/; do
   printf '%s\t%s\n' "$name_dir" "$desc" >> "$descs"
 done
 
+# Ponytail ladder must not drift: rules/ is what .cursorrules loads (no skills/ there),
+# skills/ponytail is what the Claude Code Skill tool loads. Two loaders, one wording.
+ladder() { grep -E '^[0-9]+\. ' "$1"; }
+lad_a="$ADF/rules/minimalism.md"; lad_b="$ADF/skills/ponytail/SKILL.md"
+if [ -f "$lad_a" ] && [ -f "$lad_b" ] && ! diff -q <(ladder "$lad_a") <(ladder "$lad_b") >/dev/null; then
+  echo "✗ ponytail ladder drift: $lad_a != $lad_b"; fails=$((fails+1))
+fi
+
 # keyword overlap across descriptions (advisory redundancy signal)
 overlap="$(awk -F'\t' '
 BEGIN{split("metric metrics quality graph review skill skills before after tokens token output codebase should minimal",a," "); for(k in a) stop[a[k]]=1}

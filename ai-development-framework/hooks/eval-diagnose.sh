@@ -73,6 +73,13 @@ while IFS=$'\t' read -r case nf ncommits nskip last; do
     echo "- [ ] hook: \`…\`";
     echo "- [ ] prompt/command: \`…\`";
     echo;
+    echo "## Expected impact";
+    echo "_Which metric moves, and by how much? (resolved=yes, iterations, est_tokens)_";
+    echo;
+    echo "## Confidence";
+    echo "**$( [ "$ncommits" -ge 2 ] && echo medium || echo low )** — mechanical: $ncommits failing commit(s).";
+    echo "Only a human raises this to high, in the PR that applies the change.";
+    echo;
     echo "## Validation";
     echo "- [ ] \`make eval-agent-flow CASE=$case\` → resolved=yes after the change";
     echo "- [ ] no regression in other cases (\`make eval-agent-flow-all\`)";

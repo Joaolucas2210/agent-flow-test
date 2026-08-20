@@ -86,6 +86,7 @@ jobs:
           make metrics | tee -a "$GITHUB_STEP_SUMMARY"
           make metrics > observability-summary.txt
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: observability-summary
           path: observability-summary.txt

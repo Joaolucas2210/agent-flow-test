@@ -139,6 +139,31 @@ impacto viram um PR separado, aprovado por humano.
 | `make routine-governance` | inventário/allowlist MCP e governança de skills |
 | `make routine-all` | todas as rotinas, em modo seguro |
 
+## Learning Loop
+
+`/learn` transforma **falhas registradas** em propostas de melhoria. Suggest-only: nenhuma
+regra, skill, hook ou `CLAUDE.md` é editado automaticamente — a mudança acontece dentro de um
+PR revisado por humano (diretiva 5).
+
+| Target | Resultado |
+| --- | --- |
+| `make learn` | lê os sinais gravados → stubs de proposta em `docs/traces/proposals/` |
+| `make learn-apply` | abre um PR só com as propostas preenchidas (`DRY_RUN=1` por padrão; nunca commita em `main`) |
+| `make test-learn` | self-test do loop (agregação, recorrência, path safety, no-clobber) |
+
+Sinais lidos, cada um com **um único writer** (zero duplicação de lógica):
+
+| Sinal | Origem | Quem grava |
+| --- | --- | --- |
+| falha de quality gate | `events.jsonl` (`task=gate-*`) | `ci-quality-gates.sh` |
+| falha de maintenance routine | `events.jsonl` (`task=routine-*`) | `maintenance-routine.sh` |
+| must-cut do PonyTail Review | `events.jsonl` (`task=review-*`, phase `ponytail-cut`) | o reviewer, via `observability.sh record` |
+| falha recorrente de task | `events.jsonl` (`outcome=failure`) | `observability.sh` |
+| caso de eval falhando | `docs/evals/results.csv` | `eval-diagnose.sh` |
+
+Confiança é **mecânica**: `medium` quando a falha repete (≥2 dias distintos, ou ≥2 commits
+para evals), `low` para ocorrência única. Nunca `high` automaticamente.
+
 O workflow canônico `closed-maintenance-loops` roda diariamente em modo seco; às segundas,
 inclui os sweeps de sugestão. Também aceita `workflow_dispatch`. Ele só publica a trajectory
 como artefato: nunca altera `main` nem abre/aprova PR automaticamente.
