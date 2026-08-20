@@ -81,6 +81,17 @@ See `ai-development-framework/CLAUDE.md` and `loops/`.
 - The core template in `ai-development-framework/.github/workflows/` is canonical. Install it
   with `make ci`; do not hand-edit the deployed copy.
 
+## Learning Loop
+
+`make learn` turns recorded failures — quality gates, maintenance routines, PonyTail review
+must-cuts, recurring task failures, failing eval cases — into improvement-proposal stubs in
+`docs/traces/proposals/`. It is suggest-only: no rule, skill, hook or `CLAUDE.md` is edited
+automatically. `make learn-apply` (`DRY_RUN=1` by default) opens a PR carrying only the filled
+proposals; applying the change to `CLAUDE.md`/`rules/`/`skills/` happens in that PR, reviewed
+by a human. Confidence is mechanical — `medium` when the failure repeats, `low` otherwise,
+never `high` without a human. A must-cut is only learned from if the reviewer records it:
+`TASK=review-<slice> PHASE=ponytail-cut OUTCOME=failure hooks/observability.sh record`.
+
 ## Maintenance Routines
 
 Use `make routine-{dead-code,abstractions,security,graph,token-budget,governance}` for closed

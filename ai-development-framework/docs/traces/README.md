@@ -16,11 +16,18 @@ make eval-agent-flow-all     # 1. Eval    — run every fixture, record outcomes
                              # 2. Evidence — runs/<case>.trajectory.md (reason/act/observe)
 make eval-diagnose           # 3. Diagnose — group failures, flag recurring, emit proposal stubs
                              # 4. Proposal — a human fills proposals/<case>.md, then re-runs the eval
+
+make learn                   # same loop for the OTHER signals: gate failures, routine
+                             # failures, PonyTail must-cuts, recurring task failures
+                             # (reads docs/observability/events.jsonl). Runs eval-diagnose too.
+make learn-apply             # 5. Propose — PR with the filled proposals (DRY_RUN=1 default)
 ```
 
 - **Diagnose proposes; a human decides the fix.** No skill/hook/prompt is edited
   automatically — verification-first (CLAUDE.md principle 5).
-- A case failing in **≥2 distinct commits** is flagged `RECURRING`.
+- A case failing in **≥2 distinct commits** is flagged `RECURRING` (`make learn` uses ≥2
+  distinct UTC days, since events carry a timestamp, not a commit).
+- Confidence is mechanical: recurring → `medium`, single → `low`, never `high` automatically.
 - `gate=skipped-*` (runtime absent) is **no signal**, not a failure.
 
 ## proposals/
@@ -42,5 +49,7 @@ the eval evidence.
 ## Scope (deliberately small)
 
 No headless runner, no generic loop controller, no failure-signature clustering
-until case volume earns them (Ponytail / roadmap Fase 4). Real anonymized run
+until case volume earns them (Ponytail / roadmap Fase 4). Two diagnose writers —
+`eval-diagnose` (results.csv) and `learn` (events.jsonl) — share this directory and
+the `TEMPLATE.md` sections, but never each other's stub logic. Real anonymized run
 samples feeding the same proposals are the next honest slice.

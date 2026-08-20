@@ -11,7 +11,7 @@ RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 DRY_RUN ?= 1
 
-.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability test-maintenance-routine rtk-report graph-hit-rate skill-audit mcp-audit routine-dead-code routine-abstractions routine-security routine-graph routine-token-budget routine-governance routine-all eval-agent-flow eval-agent-flow-all eval-diagnose test-loop hooks ci clean-links loop token-budget
+.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability test-maintenance-routine rtk-report graph-hit-rate skill-audit mcp-audit routine-dead-code routine-abstractions routine-security routine-graph routine-token-budget routine-governance routine-all eval-agent-flow eval-agent-flow-all eval-diagnose learn learn-apply test-learn test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -147,6 +147,17 @@ eval-agent-flow-all: ## Run every fixture case (doesn't abort on a failing case)
 
 eval-diagnose: ## Diagnose recurring eval failures → improvement-proposal stubs in docs/traces/proposals
 	@chmod +x $(ADF)/hooks/eval-diagnose.sh && $(ADF)/hooks/eval-diagnose.sh
+
+learn: ## Learning loop: recorded failures → improvement-proposal stubs (suggest-only, nothing applied)
+	@chmod +x $(ADF)/hooks/eval-diagnose.sh $(ADF)/hooks/learn.sh
+	@$(ADF)/hooks/eval-diagnose.sh
+	@$(ADF)/hooks/learn.sh
+
+learn-apply: ## Open a PR carrying the filled proposals (never commits to main; needs gh)
+	@$(ADF)/hooks/learn-apply.sh
+
+test-learn: ## Self-test the learning loop (aggregation, recurrence, filename safety, no-clobber)
+	@chmod +x $(ADF)/hooks/test-learn.sh && $(ADF)/hooks/test-learn.sh
 
 hooks: ## (Re)install the git pre-commit hook
 	@chmod +x $(ADF)/hooks/*.sh $(ADF)/hooks/pre-commit \

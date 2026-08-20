@@ -5,7 +5,18 @@
 set -euo pipefail
 
 run()  { command -v rtk >/dev/null 2>&1 && rtk "$@" || "$@"; }
-fail() { echo "✗ $1"; exit 1; }
+
+# A failing gate is the learning loop's input, so record it before dying. `|| true`:
+# a recording problem must never mask the gate failure it was describing.
+record_failure() {
+  local slug
+  # ponytail: 40-char cap keeps the proposal filename sane. The message is fixed per
+  # call site, so the truncated slug is still a stable recurrence key.
+  slug="gate-$(printf '%s' "$1" | tr -cs 'A-Za-z0-9' '-' | cut -c1-40 | sed 's/-*$//')"
+  ADF_DIR="$ADF" TASK="$slug" ARCHETYPE=Maintainer PHASE=quality-gate OUTCOME=failure \
+    "$ADF/hooks/observability.sh" record >/dev/null 2>&1 || true
+}
+fail() { echo "✗ $1"; record_failure "$1"; exit 1; }
 
 CI="${CI:-}"                     # set CI=1 (any CI runner sets this) → "no gates" becomes a hard failure
 ADF="${ADF:-ai-development-framework}"
@@ -45,6 +56,7 @@ command -v rtk >/dev/null 2>&1 && rtk gain || true
 
 # 7. Observability contract — task hand-offs must remain structured and trajectory-capable.
 "$ADF/hooks/test-observability.sh" || fail "observability contract"
+"$ADF/hooks/test-learn.sh"         || fail "learning-loop contract"
 
 # Honest verdict — never claim green for gates that never ran.
 if [ ${#skipped[@]} -gt 0 ]; then printf '  skipped: %s\n' "${skipped[@]}"; fi
