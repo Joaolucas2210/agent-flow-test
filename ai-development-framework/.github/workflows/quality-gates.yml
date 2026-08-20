@@ -38,7 +38,15 @@ jobs:
           count="$(git diff --name-only "$base"...HEAD | wc -l | tr -d ' ')"
           [ "$count" -le 30 ] || { echo "::error::file-count sanity check failed: $count > 30"; exit 1; }
           ! git diff --name-only "$base"...HEAD | grep -E '(^|/)\.env($|\.)|\.(pem|p12|key)$'
-          ! git diff --unified=0 "$base"...HEAD | grep -E '^\+.*(BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|-----BEGIN)'
+          private_key="BEGIN "
+          private_key+="[A-Z ]*PRIVATE KEY"
+          pem="-----BE"
+          pem+="GIN"
+          secret_pattern="^\\+.*($private_key|AKIA[0-9A-Z]{16}|$pem)"
+          if git diff --unified=0 "$base"...HEAD | grep -E "$secret_pattern"; then
+            echo "::error::possible secret in added content"
+            exit 1
+          fi
       - name: Check knowledge graph freshness
         run: |
           if [ -f graphify-out/graph.json ]; then
