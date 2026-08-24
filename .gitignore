@@ -25,6 +25,11 @@ node_modules/
 __pycache__/
 *.pyc
 
+# Observability run log: machine-local (timestamps, local runs). The durable signals are
+# docs/evals/results.csv and docs/metrics/history.csv; CI publishes its own summary artifact.
+ai-development-framework/docs/observability/events.jsonl
+ai-development-framework/docs/observability/trajectories/
+
 # Metrics artifacts: volatile / machine-local. history.csv is the durable one, kept.
 ai-development-framework/docs/metrics/rtk-report.txt
 ai-development-framework/docs/metrics/graph-hits.log

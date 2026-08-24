@@ -63,8 +63,11 @@ jobs:
             echo "::notice::no graphify-out/graph.json — build in-agent with '/graphify .'"
           fi
       - name: Run quality gates
+        env:
+          # The EDD gate diffs against the PR base; on push it falls back to origin/main.
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: |
-          chmod +x "$FRAMEWORK_DIR/hooks/ci-quality-gates.sh"
+          chmod +x "$FRAMEWORK_DIR"/hooks/*.sh
           "$FRAMEWORK_DIR/hooks/ci-quality-gates.sh"
       - name: Maintainer audits
         run: |

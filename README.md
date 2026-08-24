@@ -31,6 +31,7 @@ Quatro apostas centrais:
 | Agentes super-engenheiram | **Ponytail** (dev sênior preguiçoso) | até ~94% menos código gerado |
 | Output de terminal inunda o contexto | **RTK** (Rust Token Killer) | 60–90% menos tokens em ops de dev |
 | Reler arquivos inteiros a cada tarefa | **Graphify** (knowledge graph) | consulta o grafo em vez de reler |
+| Mudança sem evidência de que funciona | **Evaluation-Driven Development** (`make eval`) | casos com gate objetivo + trajectory; nenhuma skill/command/hook nova sem eval, self-test ou waiver datado |
 | Review linha-a-linha não escala | **Quality Gates** (métricas) | coverage/complexity/mutation como gate — ativos por stack detectado (veja abaixo) |
 
 ---
@@ -113,7 +114,11 @@ make check            # verifica ferramentas, sem alterar nada
 | `make adf-claude` / `make adf-codex` / `make adf-cursor` | ativa para uma plataforma + Graphify |
 | `make setup-graphify` | `pip install` + `graphify install --platform` + `graphify build` |
 | `make check` | doctor: verifica git/graphify/rtk |
-| `make quality` | roda os quality gates do stack detectado (JS/TS ou Python); pula e avisa se não houver runner — nunca reporta verde falso |
+| `make quality` | roda a parede de gates de **todos** os stacks detectados (JS/TS, Python, shell) + evals + contratos; pula e avisa se não houver runner — nunca reporta verde falso |
+| `make complexity` | complexidade ciclomática + tamanho de função para **shell** (`ARGS=--report` só mostra os números) |
+| `make eval` | Evaluation-Driven Development: roda todos os casos + gate de cobertura de eval do diff + diagnóstico |
+| `make eval-required` | gate EDD isolado: toda skill/command/hook alterada precisa de eval, self-test ou waiver datado (`BASE=<ref>`) |
+| `make test-all` | roda todos os self-tests do framework (os contratos que `make quality` exige) |
 | `make graph-check` | reporta se o grafo (`graphify-out/GRAPH_REPORT.md`) está stale vs `git rev-parse HEAD` |
 | `make test-loop` | smoke-test: grafo + gates + `rtk gain` |
 | `make hooks` | (re)instala o git pre-commit |
@@ -159,7 +164,8 @@ Sinais lidos, cada um com **um único writer** (zero duplicação de lógica):
 | falha de maintenance routine | `events.jsonl` (`task=routine-*`) | `maintenance-routine.sh` |
 | must-cut do PonyTail Review | `events.jsonl` (`task=review-*`, phase `ponytail-cut`) | o reviewer, via `observability.sh record` |
 | falha recorrente de task | `events.jsonl` (`outcome=failure`) | `observability.sh` |
-| caso de eval falhando | `docs/evals/results.csv` | `eval-diagnose.sh` |
+| caso de eval falhando | `docs/evals/results.csv` | `eval-diagnose.sh` (alimentado por `make eval`) |
+| mudança sem eval | diff vs base | `eval-required.sh` (bloqueia dentro de `make quality`) |
 
 Confiança é **mecânica**: `medium` quando a falha repete (≥2 dias distintos, ou ≥2 commits
 para evals), `low` para ocorrência única. Nunca `high` automaticamente.
@@ -244,6 +250,7 @@ de arquivos/secrets e publica o recibo de observabilidade. Veja
 /plan  → breakdown mínimo + query no grafo   (skills/planning + graphify)
 /build → implementação mínima                (skills/implementation + ponytail)
 /test  → testes + mutation + coverage gate   (skills/test-review + quality-gates)
+/eval  → casos + gate EDD + diagnóstico      (hooks/eval-*.sh + skills/quality-gates)
 /review→ painel multi-agente (métricas)      (agents/* + skills/pr-review)
 /graphify . --update → atualiza o grafo      (skills/graphify)
 /ship  → gates verdes → PR                   (hooks/ + skills/quality-gates)
