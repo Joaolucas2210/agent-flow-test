@@ -1,10 +1,22 @@
 # ADR 0005: evolução incremental para Agent Development Harness
 
-- **Status:** Proposed — aguarda revisão humana; não altera regras vigentes.
+- **Status:** Accepted
 - **Date:** 2026-09-17
-- **Deciders:** mantenedores humanos do repositório, a registrar na revisão da Spec.
+- **Deciders:** João Lucas
+- **Aprovado por:** João Lucas
+- **Data da decisão:** 2026-09-17
+- **Revisão aprovada:** `bd9fb74ffc93160a708722fe6fe72ce016e30cd6`
+- **Escopo inicial autorizado:** H1-01
 - **Spec:** [arquitetura, gaps e plano H0–H7](../../../docs/specs/agent-development-harness.md).
 - **Baseline:** `f13e147` (`feat/evaluation-driven-development`).
+
+## Registro de aprovação
+
+A arquitetura foi revisada e aceita por João Lucas em 2026-09-17, tendo como referência a revisão `bd9fb74ffc93160a708722fe6fe72ce016e30cd6`.
+
+A aprovação autoriza a evolução incremental descrita nesta decisão. A primeira Implementation PR autorizada é a H1-01. Operações sensíveis, fases posteriores e efeitos protegidos continuam submetidos aos human gates definidos na Spec.
+
+Histórico de status: Proposed → Accepted em 2026-09-17, conforme aprovação humana expressa de João Lucas. O conteúdo original abaixo foi preservado como registro da proposta e de suas condições de aprovação à época.
 
 ## Context
 
