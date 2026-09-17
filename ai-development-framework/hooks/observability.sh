@@ -74,27 +74,41 @@ trajectory() {
   echo "✓ trajectory: $output"
 }
 
+# Counters over the event log. Sets the caller's locals (bash dynamic scope).
+count_events() {
+  total="$(wc -l < "$EVENTS" | tr -d ' ')"
+  switches="$(grep -c '"switched":true' "$EVENTS" || true)"
+  succeeded="$(grep -c '"outcome":"success"' "$EVENTS" || true)"
+  failed="$(grep -c '"outcome":"failure"' "$EVENTS" || true)"
+  tokens="$(awk '
+    function add(field,    parts, value) { if (split($0, parts, field) > 1) { split(parts[2], value, ","); if (value[1] ~ /^[0-9]+$/) { total += value[1]; seen = 1 } } }
+    { add("\"tokens_in\":"); add("\"tokens_out\":") }
+    END { print seen ? total : "na" }
+  ' "$EVENTS")"
+  cost="$(awk -F'"cost_usd":' 'NF > 1 { split($2, value, ","); if (value[1] ~ /^[0-9.]+$/) { total += value[1]; seen = 1 } } END { if (seen) printf "%.6f", total; else print "na" }' "$EVENTS")"
+}
+
+# Eval signal — the Evaluation-Driven Development half of the loop. `resolved` is the
+# outcome column of docs/evals/results.csv; skipped runs are no signal, never a pass.
+count_evals() {
+  local csv="$ADF/docs/evals/results.csv"
+  [ -f "$csv" ] || return 0
+  evals="$(( $(wc -l < "$csv") - 1 ))"
+  eval_pass="$(awk -F, 'NR>1 && $4=="yes"' "$csv" | wc -l | tr -d ' ')"
+  eval_fail="$(awk -F, 'NR>1 && $4=="no"'  "$csv" | wc -l | tr -d ' ')"
+  eval_cases="$(awk -F, 'NR>1 && $3!="" {c[$3]=1} END {print length(c)}' "$csv")"
+}
+
+rate() { awk -v n="$1" -v d="$2" 'BEGIN { if (d+0 > 0) printf "%.1f%%", 100*n/d; else print "na" }'; }
+
 summary() {
-  local total switches succeeded failed tokens cost evals success_rate switch_rate
-  total=0; switches=0; succeeded=0; failed=0; tokens=na; cost=na; evals=0; success_rate=na; switch_rate=na
-  if [ -f "$EVENTS" ]; then
-    total="$(wc -l < "$EVENTS" | tr -d ' ')"
-    switches="$(grep -c '"switched":true' "$EVENTS" || true)"
-    succeeded="$(grep -c '"outcome":"success"' "$EVENTS" || true)"
-    failed="$(grep -c '"outcome":"failure"' "$EVENTS" || true)"
-    tokens="$(awk '
-      function add(field,    parts, value) { if (split($0, parts, field) > 1) { split(parts[2], value, ","); if (value[1] ~ /^[0-9]+$/) { total += value[1]; seen = 1 } } }
-      { add("\"tokens_in\":"); add("\"tokens_out\":") }
-      END { print seen ? total : "na" }
-    ' "$EVENTS")"
-    cost="$(awk -F'"cost_usd":' 'NF > 1 { split($2, value, ","); if (value[1] ~ /^[0-9.]+$/) { total += value[1]; seen = 1 } } END { if (seen) printf "%.6f", total; else print "na" }' "$EVENTS")"
-  fi
-  if [ -f "$ADF/docs/evals/results.csv" ]; then
-    evals="$(( $(wc -l < "$ADF/docs/evals/results.csv") - 1 ))"
-  fi
-  [ "$total" -gt 0 ] && switch_rate="$(awk -v n="$switches" -v d="$total" 'BEGIN { printf "%.1f%%", 100*n/d }')"
-  [ $((succeeded + failed)) -gt 0 ] && success_rate="$(awk -v n="$succeeded" -v d="$((succeeded + failed))" 'BEGIN { printf "%.1f%%", 100*n/d }')"
-  echo "observability: events=$total success=$succeeded success_rate=$success_rate failure=$failed switches=$switches switch_rate=$switch_rate tokens=$tokens cost_usd_estimate=$cost eval_runs=$evals"
+  local total switches succeeded failed tokens cost evals eval_pass eval_fail eval_cases
+  total=0; switches=0; succeeded=0; failed=0; tokens=na; cost=na
+  evals=0; eval_pass=0; eval_fail=0; eval_cases=0
+  [ -f "$EVENTS" ] && count_events
+  count_evals
+  echo "observability: events=$total success=$succeeded success_rate=$(rate "$succeeded" "$((succeeded + failed))") failure=$failed switches=$switches switch_rate=$(rate "$switches" "$total") tokens=$tokens cost_usd_estimate=$cost eval_runs=$evals"
+  echo "evals: cases=$eval_cases runs=$evals resolved=$eval_pass failed=$eval_fail resolve_rate=$(rate "$eval_pass" "$((eval_pass + eval_fail))") (source: docs/evals/results.csv — 'make eval' refreshes, 'make learn' diagnoses)"
 }
 
 case "${1:-}" in

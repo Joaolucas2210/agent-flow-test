@@ -1,74 +1,104 @@
 #!/usr/bin/env bash
-# Agent-flow eval harness (Loop Engineering — Fase 4, minimal slice).
-# Runs ONE fixture case's objective gate, requires a captured trajectory, and
-# records the result. Reproducible without an LLM in the loop: the gate is the
-# truth, the trajectory is the evidence of a run.
+# Agent-flow eval harness (Evaluation-Driven Development — the outer loop).
+# Runs a fixture case's objective gate, requires a captured trajectory, and records
+# the result. Reproducible without an LLM in the loop: the gate is the truth, the
+# trajectory is the evidence of a run.
 #
 #   resolved = fixture gate passed.  Exit code = resolved (0 yes / 1 no) so this
 #   behaves like a gate. Trajectory missing = hard fail (trajectory is first-class).
 #   Runtime absent = honest skip (resolved=na, exit 0) — same policy as ci-quality-gates.
 #
 # Polyglot by the fixture's gate file (stdlib runners only, no new dep):
-#   test.js     -> node --test              test_*.py -> python3 -m unittest discover
+#   test.js  -> node --test        test_*.py -> python3 -m unittest discover
 #
-# Usage: eval-agent-flow.sh [CASE]     (default: sum-bug)
+# Usage: eval-agent-flow.sh [CASE]      (default: sum-bug)
+#        eval-agent-flow.sh --all       every fixture; exit 1 if any case regressed
 set -uo pipefail
 
-ADF="ai-development-framework"
+ADF="${ADF:-ai-development-framework}"
 EVALS="$ADF/docs/evals"
-CASE="${1:-sum-bug}"
-FIX="$EVALS/fixtures/$CASE"
-TRAJ="$EVALS/runs/$CASE.trajectory.md"
 CSV="$EVALS/results.csv"
-started=$SECONDS
 
-echo "▶ eval-agent-flow ($CASE)"
-[ -d "$FIX" ]  || { echo "✗ no fixture at $FIX"; exit 1; }
-[ -f "$TRAJ" ] || { echo "✗ $CASE: no trajectory at $TRAJ — a run MUST capture reason/act/observe"; exit 1; }
+# Gate runtime, picked by the fixture's gate file. One language per fixture.
+detect_lang() {
+  if [ -f "$1/test.js" ]; then echo "js node"
+  elif ls "$1"/test_*.py >/dev/null 2>&1; then echo "py python3"
+  fi
+}
 
-# Pick the gate runtime by the fixture's gate file. One language per fixture.
-if [ -f "$FIX/test.js" ]; then
-  lang=js; need=node
-elif ls "$FIX"/test_*.py >/dev/null 2>&1; then
-  lang=py; need=python3
-else
-  echo "✗ $CASE: fixture has no gate (expected test.js or test_*.py)"; exit 1
-fi
-
-# Trajectory metadata (na if absent). frontmatter: iterations / est_tokens.
-field() { awk -F': *' -v k="$1" '$1==k{print $2; exit}' "$TRAJ"; }
-iters="$(field iterations)";  [ -n "$iters" ] || iters=na
-tokens="$(field est_tokens)"; [ -n "$tokens" ] || tokens=na
-
-# Objective gate. Runtime absent -> honest skip, not a fake pass.
 run_gate() {
-  case "$lang" in
-    js) ( cd "$FIX" && node --test test.js ) ;;
-    py) ( cd "$FIX" && python3 -m unittest discover ) ;;
+  case "$2" in
+    js) ( cd "$1" && node --test test.js ) ;;
+    py) ( cd "$1" && python3 -m unittest discover ) ;;
   esac
 }
-if ! command -v "$need" >/dev/null 2>&1; then
-  resolved=na; gate="skipped-no-$need"
-  echo "⚠ $need absent — gate not evaluated (local mode, not a pass)"
-elif run_gate >/dev/null 2>&1; then
-  resolved=yes; gate=pass
-else
-  resolved=no;  gate=fail
-fi
 
-# Record — append idempotently per commit+case (dedup like metrics-snapshot).
-commit="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
-date="$(git show -s --format=%cs HEAD 2>/dev/null || echo nodate)"
-[ -f "$CSV" ] || echo "date,commit,case,resolved,iterations,est_tokens,gate" > "$CSV"
-row="$date,$commit,$CASE,$resolved,$iters,$tokens,$gate"
-tmp="$(mktemp)"; grep -v ",$commit,$CASE," "$CSV" > "$tmp" 2>/dev/null || true; mv "$tmp" "$CSV"
-echo "$row" >> "$CSV"
+# Append idempotently per commit+case (same dedup rule as metrics-snapshot).
+record_row() {
+  local row="$1" tmp
+  [ -f "$CSV" ] || echo "date,commit,case,resolved,iterations,est_tokens,gate" > "$CSV"
+  tmp="$(mktemp)"; grep -v ",$2,$3," "$CSV" > "$tmp" 2>/dev/null || true; mv "$tmp" "$CSV"
+  echo "$row" >> "$CSV"
+  echo "✓ recorded: $row"
+}
 
-echo "✓ recorded: $row"
-outcome=failure
-[ "$resolved" = yes ] && outcome=success
-[ "$resolved" = na ] && outcome=skipped
-TASK="eval-$CASE" ARCHETYPE=Grower PHASE=eval TOKENS_IN=na TOKENS_OUT=na BUDGET_REMAINING=na \
-  DURATION_SECONDS="$((SECONDS - started))" OUTCOME="$outcome" \
-  "$ADF/hooks/observability.sh" complete
-[ "$resolved" = "yes" ] || [ "$resolved" = "na" ]   # exit code = resolved
+# Same outcome, in the shared event log the Learning Loop reads.
+record_event() {
+  local outcome=failure
+  [ "$2" = yes ] && outcome=success
+  [ "$2" = na ]  && outcome=skipped
+  ADF_DIR="$ADF" TASK="eval-$1" ARCHETYPE=Grower PHASE=eval TOKENS_IN=na TOKENS_OUT=na BUDGET_REMAINING=na \
+    DURATION_SECONDS="$3" OUTCOME="$outcome" "$ADF/hooks/observability.sh" complete
+}
+
+# The verdict: gate passed, gate failed, or no runtime to judge with (never a fake pass).
+resolve() {
+  if ! command -v "$3" >/dev/null 2>&1; then
+    echo "⚠ $3 absent — gate not evaluated (local mode, not a pass)" >&2
+    echo "na skipped-no-$3"
+  elif run_gate "$1" "$2" >/dev/null 2>&1; then echo "yes pass"
+  else echo "no fail"; fi
+}
+
+# Trajectory frontmatter (iterations / est_tokens); `na` when absent, never invented.
+field() { awk -F': *' -v k="$1" '$1==k{print $2; exit}' "$2"; }
+
+one_case() {
+  local case="$1" fix="$EVALS/fixtures/$1" traj="$EVALS/runs/$1.trajectory.md" started=$SECONDS
+  echo "▶ eval-agent-flow ($case)"
+  [ -d "$fix" ]  || { echo "✗ no fixture at $fix"; return 1; }
+  [ -f "$traj" ] || { echo "✗ $case: no trajectory at $traj — a run MUST capture reason/act/observe"; return 1; }
+
+  local lang need resolved gate iters tokens
+  read -r lang need <<< "$(detect_lang "$fix")"
+  [ -n "$lang" ] || { echo "✗ $case: fixture has no gate (expected test.js or test_*.py)"; return 1; }
+
+  iters="$(field iterations "$traj")";  [ -n "$iters" ] || iters=na
+  tokens="$(field est_tokens "$traj")"; [ -n "$tokens" ] || tokens=na
+
+  read -r resolved gate <<< "$(resolve "$fix" "$lang" "$need")"
+
+  local commit date
+  commit="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
+  date="$(git show -s --format=%cs HEAD 2>/dev/null || echo nodate)"
+  record_row "$date,$commit,$case,$resolved,$iters,$tokens,$gate" "$commit" "$case"
+
+  record_event "$case" "$resolved" "$((SECONDS - started))"
+  [ "$resolved" = yes ] || [ "$resolved" = na ]   # exit code = resolved
+}
+
+all_cases() {
+  local rc=0 d c
+  for d in "$EVALS"/fixtures/*/; do
+    [ -d "$d" ] || continue
+    c="$(basename "$d")"
+    one_case "$c" || rc=1
+  done
+  echo "▶ all cases run (see $CSV) — next: make learn"
+  return "$rc"
+}
+
+case "${1:-sum-bug}" in
+  --all) all_cases ;;
+  *)     one_case "${1:-sum-bug}" ;;
+esac

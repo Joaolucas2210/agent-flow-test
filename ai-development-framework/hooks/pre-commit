@@ -16,4 +16,13 @@ if command -v lizard >/dev/null 2>&1; then
     echo "✗ complexity/size gate failed (CCN>10 or fn>50 lines)"; exit 1; }
 fi
 
-echo "✓ pre-commit gates passed (mutation/dependency gates run in CI)"
+# 3. Shell complexity — cheap, dependency-free, and the framework's own language.
+staged_sh="$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.sh$' || true)"
+if [ -n "$staged_sh" ]; then
+  # git runs hooks from the repo root, so the framework path is stable here.
+  # shellcheck disable=SC2086
+  ai-development-framework/hooks/shell-complexity.sh $staged_sh \
+    || { echo "✗ shell complexity gate failed"; exit 1; }
+fi
+
+echo "✓ pre-commit gates passed (mutation/dependency/eval gates run in CI)"

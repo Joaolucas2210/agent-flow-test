@@ -21,7 +21,8 @@ make learn-apply    # 3. Propose  — open a PR carrying only the proposals
 | Maintenance-routine failures | same log (`task=routine-*`) | `maintenance-routine.sh` |
 | PonyTail review must-cuts | same log (`task=review-*`, phase `ponytail-cut`) | the reviewer, see below |
 | Recurring agent-flow failures | same log (any task, `outcome=failure`) | `observability.sh` |
-| Failing eval cases | `docs/evals/results.csv` | `eval-diagnose.sh` |
+| Failing eval cases | `docs/evals/results.csv` | `eval-diagnose.sh` (fed by `make eval`) |
+| Unevaluated changes | the diff vs base | `eval-required.sh` (blocks in `make quality`) |
 
 One writer per signal class — `make learn` runs `eval-diagnose` **and** `learn.sh` so
 stub logic is never duplicated.
@@ -36,6 +37,13 @@ TASK=review-<slice> ARCHETYPE=Sweeper PHASE=ponytail-cut OUTCOME=failure \
 ```
 
 No record, no signal — `make learn` reports what was recorded and nothing else.
+
+## Evals are the outer loop
+
+`make eval` refreshes `results.csv` **and** records each run in `events.jsonl`, so both writers
+above see the same run. Read the current state with `make metrics` — the `evals:` line reports
+`cases / runs / resolved / resolve_rate`. A case that regressed is a proposal waiting to be written,
+not a number to be argued with.
 
 ## Confidence is mechanical
 

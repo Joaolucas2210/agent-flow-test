@@ -89,26 +89,31 @@ setup_hooks() {
 
 # The GitHub-native pipeline is installed explicitly with `make ci`; its core template is canonical.
 
+# Auto-install if missing. ponytail: pip if graphify absent, else use what's there.
+install_graphify() {
+  have graphify && return 0
+  warn "graphify not found — installing '$GRAPHIFY_PKG' (⚠ verify pkg name at the repo)"
+  if have pip; then pip install "$GRAPHIFY_PKG" 2>/dev/null || true
+  elif have pip3; then pip3 install "$GRAPHIFY_PKG" 2>/dev/null || true
+  else warn "no pip/pip3 — install Python then rerun"; fi
+}
+
+# One rule per activated platform — `all` wires claude+codex+cursor, not just one.
+wire_graphify() {
+  ok "graphify present: $(graphify --version 2>/dev/null || echo '?')"
+  local p
+  for p in $PLATFORMS; do
+    ( cd "$ROOT" && graphify install --platform "$p" 2>/dev/null ) \
+      && ok "graphify skill installed (--platform $p)" || warn "graphify install skipped/failed (--platform $p)"
+  done
+  # ponytail: the graph is built by the /graphify skill in-agent, not a shell command.
+  info "build the graph in-agent:  /graphify .   → writes graphify-out/graph.json"
+}
+
 setup_graphify() {
   info "Graphify — knowledge graph (per-project, --platform $PLATFORMS)"
-  # Auto-install if missing. ponytail: pip if graphify absent, else use what's there.
-  if ! have graphify; then
-    warn "graphify not found — installing '$GRAPHIFY_PKG' (⚠ verify pkg name at the repo)"
-    if have pip; then pip install "$GRAPHIFY_PKG" 2>/dev/null || true
-    elif have pip3; then pip3 install "$GRAPHIFY_PKG" 2>/dev/null || true
-    else warn "no pip/pip3 — install Python then rerun"; fi
-  fi
-  if have graphify; then
-    ok "graphify present: $(graphify --version 2>/dev/null || echo '?')"
-    # One rule per activated platform — `all` wires claude+codex+cursor, not just one.
-    local p
-    for p in $PLATFORMS; do
-      ( cd "$ROOT" && graphify install --platform "$p" 2>/dev/null ) \
-        && ok "graphify skill installed (--platform $p)" || warn "graphify install skipped/failed (--platform $p)"
-    done
-    # ponytail: the graph is built by the /graphify skill in-agent, not a shell command.
-    info "build the graph in-agent:  /graphify .   → writes graphify-out/graph.json"
-  else
+  install_graphify
+  if have graphify; then wire_graphify; else
     err "graphify still unavailable after install attempt."
     printf '    pip install %s && graphify install --platform %s\n' "$GRAPHIFY_PKG" "$PLATFORMS"
     printf '    then in-agent:  /graphify .\n'
@@ -125,20 +130,26 @@ check_rtk() {
   fi
 }
 
-doctor() {
-  info "Environment check (no changes made)"
+doctor_tools() {
   [ -f "$ROOT/VERSION" ] && ok "adf $(cat "$ROOT/VERSION")" || warn "no VERSION file"
   [ -d "$ADF" ] && ok "framework dir present" || die "missing $ADF — run from the project root"
   for t in git graphify rtk; do have "$t" && ok "$t: $(command -v "$t")" || warn "$t: not installed"; done
   [ -d "$ROOT/.git" ] && ok ".git present" || warn "not a git repo"
-  # Aggregate the read-only gates (each is its own make target). Heavy CI gate stays `make quality`.
-  if have make; then
-    for g in graph-check skill-audit mcp-audit; do
-      make -s -C "$ROOT" "$g" >/dev/null 2>&1 && ok "gate: $g" || warn "gate: $g failed — run 'make $g' for detail"
-    done
-  else
-    warn "make not found — run gates individually (see docs/install.md)"
-  fi
+}
+
+# Aggregate the read-only gates (each is its own make target). Heavy CI gate stays `make quality`.
+doctor_gates() {
+  have make || { warn "make not found — run gates individually (see docs/install.md)"; return 0; }
+  local g
+  for g in graph-check skill-audit mcp-audit; do
+    make -s -C "$ROOT" "$g" >/dev/null 2>&1 && ok "gate: $g" || warn "gate: $g failed — run 'make $g' for detail"
+  done
+}
+
+doctor() {
+  info "Environment check (no changes made)"
+  doctor_tools
+  doctor_gates
 }
 
 summary() {
@@ -170,19 +181,30 @@ EOF
 }
 
 # ---------------------------------------------------------------------------- main
-main() {
-  [ -d "$ADF" ] || die "ai-development-framework/ not found next to this script."
-  local target="${1:-all}"
-  case "$target" in
+# Read-only flags exit here; anything else is a target and falls through to activation.
+handle_flags() {
+  case "$1" in
     -h|--help)         usage; exit 0 ;;
     -v|--version)      cat "$ROOT/VERSION" 2>/dev/null || echo "unknown"; exit 0 ;;
     --check|--doctor)  doctor; exit 0 ;;
+  esac
+}
+
+activate() {
+  case "$1" in
     claude)  PLATFORMS="claude"; setup_claude ;;
     codex)   PLATFORMS="codex";  setup_codex ;;
     cursor)  PLATFORMS="cursor"; setup_cursor ;;
     all)     PLATFORMS="claude codex cursor"; setup_claude; setup_codex; setup_cursor ;;
-    *)       err "unknown target: $target"; usage; exit 2 ;;
+    *)       err "unknown target: $1"; usage; exit 2 ;;
   esac
+}
+
+main() {
+  [ -d "$ADF" ] || die "ai-development-framework/ not found next to this script."
+  local target="${1:-all}"
+  handle_flags "$target"
+  activate "$target"
   setup_hooks
   echo
   setup_graphify

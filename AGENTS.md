@@ -37,6 +37,10 @@ Before changing code:
    - Run relevant tests.
    - Run lint/build when applicable.
    - Review diffs.
+   - Run `make quality` (all detected stacks + evals + contracts) and `make eval`.
+   - New skill / command / hook / routine? It needs an eval case, a `hooks/test-*.sh`,
+     or a dated waiver in `docs/evals/waivers.md`. `make eval-required` is the gate.
+   - A gate that could not run is **skipped, never green**. Report skips explicitly.
 
 5. Final Response
    - Summarize changes.
@@ -53,6 +57,7 @@ how strict the gates are. Route with `skills/archetype-orchestrator` or `make lo
 - **Builder** — Implementation + Test/Review. Test-first, hard gates (`make quality`).
 - **Sweeper** — delete/simplify/cut tokens; behavior unchanged. Auto: RTK + Graphify.
 - **Grower** — iterate on real metrics (`docs/metrics/`, evals). Trend must move.
+  Evaluation-Driven Development: write the eval case first, watch it go red, then implement.
 - **Maintainer** — security, reliability, scale, long-term health. Strictest gates.
 
 Lifecycle is a sequence (skip stages, never gates). Human owns taste at every hand-off.

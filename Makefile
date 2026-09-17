@@ -11,7 +11,7 @@ RTK := $(shell command -v rtk 2>/dev/null)
 RUN := $(if $(RTK),rtk,)
 DRY_RUN ?= 1
 
-.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality graph-check metrics metrics-snapshot observability-record observability-complete test-observability test-maintenance-routine rtk-report graph-hit-rate skill-audit mcp-audit routine-dead-code routine-abstractions routine-security routine-graph routine-token-budget routine-governance routine-all eval-agent-flow eval-agent-flow-all eval-diagnose learn learn-apply test-learn test-loop hooks ci clean-links loop token-budget
+.PHONY: help setup install-into adf-claude adf-codex adf-cursor setup-graphify check quality complexity graph-check metrics metrics-snapshot observability-record observability-complete test-observability test-maintenance-routine test-all rtk-report graph-hit-rate skill-audit mcp-audit routine-dead-code routine-abstractions routine-security routine-graph routine-token-budget routine-governance routine-all eval eval-agent-flow eval-agent-flow-all eval-required eval-diagnose learn learn-apply test-learn test-loop hooks ci clean-links loop token-budget
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -57,6 +57,14 @@ check: ## Verify tools (git/graphify/rtk) without changing anything
 
 quality: ## Run the full CI quality gates locally (coverage/complexity/mutation/cycles)
 	@chmod +x $(ADF)/hooks/ci-quality-gates.sh && $(ADF)/hooks/ci-quality-gates.sh
+
+complexity: ## Cyclomatic complexity + function length for shell (report mode: make complexity ARGS=--report)
+	@$(ADF)/hooks/shell-complexity.sh $(ARGS)
+
+test-all: ## Run every framework self-test (the contracts `make quality` enforces)
+	@rc=0; for t in $(ADF)/hooks/test-*.sh; do \
+	  bash "$$t" || { echo "✗ $$t"; rc=1; }; \
+	done; exit $$rc
 
 graph-check: ## Report if the knowledge graph is stale vs HEAD (tolerates topology-neutral commits)
 	@chmod +x $(ADF)/hooks/graph-check.sh && $(ADF)/hooks/graph-check.sh
@@ -135,15 +143,21 @@ routine-all: ## Run every closed maintenance loop in safe suggest-only mode
 	  $(MAKE) -s routine-$$routine DRY_RUN="$(DRY_RUN)" || exit $$?; \
 	done
 
+eval: ## Evaluation-Driven Development in one command: every case + eval coverage of the diff + diagnosis
+	@chmod +x $(ADF)/hooks/eval-agent-flow.sh $(ADF)/hooks/eval-required.sh $(ADF)/hooks/eval-diagnose.sh
+	@rc=0; $(ADF)/hooks/eval-agent-flow.sh --all || rc=1; \
+	$(ADF)/hooks/eval-required.sh || rc=1; \
+	$(ADF)/hooks/eval-diagnose.sh; \
+	echo "▶ evals done — proposals in docs/traces/proposals, metrics in 'make metrics'"; exit $$rc
+
 eval-agent-flow: ## Run one agent-flow eval case (CASE=sum-bug): objective gate + trajectory + record to docs/evals/results.csv
 	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh $(CASE)
 
 eval-agent-flow-all: ## Run every fixture case (doesn't abort on a failing case) — refreshes all rows in results.csv
-	@chmod +x $(ADF)/hooks/eval-agent-flow.sh; rc=0; \
-	for d in $(ADF)/docs/evals/fixtures/*/; do \
-	  c=$$(basename "$$d"); $(ADF)/hooks/eval-agent-flow.sh "$$c" || rc=1; \
-	done; \
-	echo "▶ all cases run (see docs/evals/results.csv) — next: make eval-diagnose"; exit $$rc
+	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh --all
+
+eval-required: ## EDD gate: every changed skill/command/hook needs an eval, a self-test, or a dated waiver (BASE=<ref>)
+	@chmod +x $(ADF)/hooks/eval-required.sh && BASE="$(BASE)" $(ADF)/hooks/eval-required.sh
 
 eval-diagnose: ## Diagnose recurring eval failures → improvement-proposal stubs in docs/traces/proposals
 	@chmod +x $(ADF)/hooks/eval-diagnose.sh && $(ADF)/hooks/eval-diagnose.sh
