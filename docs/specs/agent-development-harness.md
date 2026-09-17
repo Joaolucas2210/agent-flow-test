@@ -1,11 +1,24 @@
 # Spec: evolução incremental para Agent Development Harness
 
-- Status: proposta para revisão humana; não autoriza implementação nem altera políticas vigentes.
+- Status: Approved.
+- Aprovado por: João Lucas.
+- Data da aprovação: 2026-09-17.
+- Revisão aprovada: `bd9fb74ffc93160a708722fe6fe72ce016e30cd6`.
+- Primeira implementação autorizada: H1-01.
+- H1-02 e fases posteriores continuam dependendo de suas próprias Implementation PRs e critérios de aceite.
 - Data: 2026-09-17.
 - Baseline inspecionada: `f13e147`, branch `feat/evaluation-driven-development`.
 - Modo desta entrega: Prototyper — discovery e arquitetura, sem código de execução.
 - Intenção de origem: solicitação «Evolução do Agent Flow para Agent Development Harness».
-- Decisão: [ADR 0005 proposto](../../ai-development-framework/docs/architecture-decision-records/0005-agent-development-harness.md).
+- Decisão: [ADR 0005 aceito](../../ai-development-framework/docs/architecture-decision-records/0005-agent-development-harness.md).
+
+## Registro de aprovação
+
+A arquitetura foi revisada e aceita por João Lucas em 2026-09-17, tendo como referência a revisão `bd9fb74ffc93160a708722fe6fe72ce016e30cd6`.
+
+A aprovação autoriza a evolução incremental descrita nesta decisão. A primeira Implementation PR autorizada é a H1-01. Operações sensíveis, fases posteriores e efeitos protegidos continuam submetidos aos human gates definidos na Spec.
+
+Histórico de status: Proposed → Approved em 2026-09-17, conforme aprovação humana expressa de João Lucas. O documento nasceu como proposta; o conteúdo original abaixo foi preservado, incluindo referências ao estado proposto e às condições de aprovação à época.
 
 ## 1. Resultado e limite desta entrega
 
