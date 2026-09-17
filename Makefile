@@ -150,8 +150,9 @@ eval: ## Evaluation-Driven Development in one command: every case + eval coverag
 	$(ADF)/hooks/eval-diagnose.sh; \
 	echo "▶ evals done — proposals in docs/traces/proposals, metrics in 'make metrics'"; exit $$rc
 
+eval-agent-flow: export CASE := $(CASE)
 eval-agent-flow: ## Run one agent-flow eval case (CASE=sum-bug): objective gate + trajectory + record to docs/evals/results.csv
-	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh $(CASE)
+	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh "$${CASE:-sum-bug}"
 
 eval-agent-flow-all: ## Run every fixture case (doesn't abort on a failing case) — refreshes all rows in results.csv
 	@chmod +x $(ADF)/hooks/eval-agent-flow.sh && $(ADF)/hooks/eval-agent-flow.sh --all

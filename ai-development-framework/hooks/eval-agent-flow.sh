@@ -63,7 +63,22 @@ resolve() {
 # Trajectory frontmatter (iterations / est_tokens); `na` when absent, never invented.
 field() { awk -F': *' -v k="$1" '$1==k{print $2; exit}' "$2"; }
 
+# Shared legacy projection; v1 calls this with errexit so write errors cannot pass.
+project_case() {
+  local case="$1" resolved="$2" gate="$3" iters="$4" tokens="$5" duration="$6"
+  local commit date
+  commit="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
+  date="$(git show -s --format=%cs HEAD 2>/dev/null || echo nodate)"
+  record_row "$date,$commit,$case,$resolved,$iters,$tokens,$gate" "$commit" "$case"
+  record_event "$case" "$resolved" "$duration"
+}
+
 one_case() {
+  if [ "${ADF_EVENTS_V1:-0}" = 1 ]; then
+    command -v python3 >/dev/null 2>&1 || { echo "✗ events v1: Python required" >&2; return 2; }
+    python3 "$(dirname "${BASH_SOURCE[0]}")/run-events.py" "$1"
+    return $?
+  fi
   local case="$1" fix="$EVALS/fixtures/$1" traj="$EVALS/runs/$1.trajectory.md" started=$SECONDS
   echo "▶ eval-agent-flow ($case)"
   [ -d "$fix" ]  || { echo "✗ no fixture at $fix"; return 1; }
@@ -78,27 +93,29 @@ one_case() {
 
   read -r resolved gate <<< "$(resolve "$fix" "$lang" "$need")"
 
-  local commit date
-  commit="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
-  date="$(git show -s --format=%cs HEAD 2>/dev/null || echo nodate)"
-  record_row "$date,$commit,$case,$resolved,$iters,$tokens,$gate" "$commit" "$case"
-
-  record_event "$case" "$resolved" "$((SECONDS - started))"
+  project_case "$case" "$resolved" "$gate" "$iters" "$tokens" "$((SECONDS - started))"
   [ "$resolved" = yes ] || [ "$resolved" = na ]   # exit code = resolved
 }
 
 all_cases() {
+  if [ "${ADF_EVENTS_V1:-0}" = 1 ] && [ "${RUN_ID+x}" = x ]; then
+    echo "✗ events v1: omit RUN_ID for --all (one generated ID per case)" >&2
+    return 2
+  fi
   local rc=0 d c
   for d in "$EVALS"/fixtures/*/; do
     [ -d "$d" ] || continue
     c="$(basename "$d")"
-    one_case "$c" || rc=1
+    one_case "$c" || { local status=$?; [ "$status" -le "$rc" ] || rc=$status; }
   done
   echo "▶ all cases run (see $CSV) — next: make learn"
   return "$rc"
 }
 
-case "${1:-sum-bug}" in
-  --all) all_cases ;;
-  *)     one_case "${1:-sum-bug}" ;;
-esac
+# Sourcing exposes only the existing gate/projection functions to the v1 writer.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  case "${1:-sum-bug}" in
+    --all) all_cases ;;
+    *)     one_case "${1:-sum-bug}" ;;
+  esac
+fi
