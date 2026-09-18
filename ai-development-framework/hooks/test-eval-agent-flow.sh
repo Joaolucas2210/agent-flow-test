@@ -10,7 +10,7 @@ tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 fw="$tmp/fw"; fix="$fw/docs/evals/fixtures/demo"; runs="$fw/docs/evals/runs"; csv="$fw/docs/evals/results.csv"
 mkdir -p "$fix" "$runs" "$fw/hooks"
 cp "$ROOT/hooks/observability.sh" "$fw/hooks/"
-( cd "$tmp" && git init -q . && git commit -q --allow-empty -m init )
+( cd "$tmp" && git init -q . && git config user.email 'test@example.invalid' && git config user.name 'Agent Flow Test' && git commit -q --allow-empty -m init )
 
 echo 'export const answer = () => 41;' > "$fix/solution.js"
 cat > "$fix/test.js" <<'JS'
