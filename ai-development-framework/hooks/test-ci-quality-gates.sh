@@ -13,28 +13,30 @@ for h in thresholds.sh shell-complexity.sh shell-complexity.awk observability.sh
 done
 cp "$ROOT/rules/quality-thresholds.md" "$fw/rules/"
 ( cd "$tmp" && git init -q . && git config user.email t@t && git config user.name t )
-gates() { ( cd "$tmp" && ADF=fw CI="${CI:-}" "$ROOT/hooks/ci-quality-gates.sh" 2>&1 ); }
+# GitHub Actions exports CI=true globally. Each scenario must choose its own mode,
+# otherwise the local-mode assertion below accidentally inherits the runner's CI mode.
+gates() { ( cd "$tmp" && ADF=fw CI="$1" "$ROOT/hooks/ci-quality-gates.sh" 2>&1 ); }
 
 # 1. Nothing to measure + CI → hard failure. A green CI run with zero gates is the lie this prevents.
-out="$(CI=1 gates)" && { echo "✗ CI passed with zero gates evaluated" >&2; exit 1; }
+out="$(gates 1)" && { echo "✗ CI passed with zero gates evaluated" >&2; exit 1; }
 grep -q 'no quality gates evaluated' <<< "$out"
 
 # 2. Same situation locally: allowed to exit 0, but must say it is NOT a pass.
-out="$(gates)"
+out="$(gates '')"
 grep -q 'local mode, not a pass' <<< "$out"
 grep -q '✓ .* gate(s) green' <<< "$out" && { echo "✗ claimed green with zero gates" >&2; exit 1; }
 
 # 3. A shell file over the complexity threshold blocks the merge...
 { echo 'bad() {'; for i in $(seq 1 12); do echo "  [ -f $i ] && echo $i"; done; echo '}'; echo bad; } > "$tmp/bad.sh"
 ( cd "$tmp" && git add bad.sh )
-out="$(CI=1 gates)" && { echo "✗ over-threshold shell passed" >&2; exit 1; }
+out="$(gates 1)" && { echo "✗ over-threshold shell passed" >&2; exit 1; }
 grep -q 'complexity (shell' <<< "$out"
 # ...and the failure reaches the learning loop as a recorded signal.
 grep -q '"task":"gate-complexity-shell' "$fw/docs/observability/events.jsonl"
 
 # 4. Clean shell = a real, counted gate. Shell is no longer an unmeasured stack.
 printf 'ok_fn() {\n  echo fine\n}\nok_fn\n' > "$tmp/bad.sh"
-out="$(CI=1 gates)"
+out="$(gates 1)"
 grep -q '✓ 1 gate(s) green' <<< "$out"
 grep -q 'skipped: evals (no fixtures)' <<< "$out"
 
